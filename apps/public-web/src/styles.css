@@ -706,3 +706,52 @@ body {
 .career-card li:has(> ul) {
   display: none;
 }
+
+/* 프로젝트 나눠 보기: PC 번호 페이지 · 모바일 자동 더 불러오기 */
+.gallery-top {
+  scroll-margin-top: 16px;
+}
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-8);
+}
+.pager-btn {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.pager-btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+}
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pager-on,
+.pager-on:hover:not(:disabled) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.pager-gap {
+  color: var(--color-muted);
+  padding: 0 4px;
+}
+.more-loading,
+.more-end {
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 13px;
+  padding: var(--space-6) 0 0;
+  margin: 0;
+}
