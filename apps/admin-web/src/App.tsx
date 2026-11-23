@@ -1,10 +1,13 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth';
-import { Layout, NAV_ITEMS } from './components/Layout';
+import { CURRENT_STEP, Layout, NAV_ITEMS } from './components/Layout';
 import { ToastProvider } from './components/Toast';
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { ProjectDetailPage } from './pages/ProjectDetailPage';
+import { ProjectFormPage } from './pages/ProjectFormPage';
+import { ProjectsPage } from './pages/ProjectsPage';
 
 function RequireAuth() {
   const { user, loading } = useAuth();
@@ -30,7 +33,11 @@ export function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route element={<RequireAuth />}>
               <Route index element={<DashboardPage />} />
-              {NAV_ITEMS.filter((n) => n.path !== '/').map((n) => (
+              <Route path="projects" element={<ProjectsPage />} />
+              <Route path="projects/new" element={<ProjectFormPage />} />
+              <Route path="projects/:id" element={<ProjectDetailPage key="detail" />} />
+              <Route path="projects/:id/edit" element={<ProjectFormPage key="edit" />} />
+              {NAV_ITEMS.filter((n) => n.step > CURRENT_STEP).map((n) => (
                 <Route key={n.path} path={n.path.slice(1)} element={<ComingSoonPage item={n} />} />
               ))}
               <Route path="*" element={<NotFound />} />

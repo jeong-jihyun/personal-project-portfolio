@@ -380,3 +380,260 @@
     padding: var(--space-6);
   }
 }
+
+/* ── 6단계: 목록·폼·상세 ── */
+a.card.kpi {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+a.card.kpi:hover {
+  border-color: var(--color-accent);
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr repeat(3, minmax(130px, 170px));
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.input {
+  min-height: var(--control-height);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  background: var(--color-surface);
+  width: 100%;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th {
+  text-align: left;
+  font-size: var(--text-caption);
+  color: var(--color-muted);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid #edf0f5;
+  vertical-align: top;
+}
+.table tbody tr:hover {
+  background: #fafbfd;
+}
+.row-title {
+  font-weight: 700;
+  color: var(--color-ink);
+  text-decoration: none;
+  display: inline-block;
+}
+.row-title:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.row-summary {
+  display: block;
+  max-width: 420px;
+}
+.row-tags {
+  display: block;
+  margin-top: 6px;
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.plain-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3) 0;
+  border-top: 1px solid #edf0f5;
+}
+.plain-list li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.break {
+  word-break: break-all;
+}
+.form-layout {
+  max-width: 860px;
+}
+.form-layout .panel:first-child {
+  margin-top: 0;
+}
+.section-title {
+  font-size: 15px;
+  line-height: 22px;
+  margin: var(--space-2) 0 var(--space-3);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-4);
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  position: sticky;
+  bottom: 0;
+  background: var(--color-canvas);
+  padding: var(--space-3) 0;
+}
+.chips {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-size: 13px;
+}
+.chip input {
+  width: 16px;
+  height: 16px;
+}
+.chip-on {
+  background: var(--color-primary-soft);
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.breadcrumb {
+  font-size: var(--text-caption);
+  color: var(--color-muted);
+  margin-bottom: var(--space-2);
+}
+.breadcrumb a {
+  color: var(--color-muted);
+}
+.row-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 18px;
+  align-items: start;
+}
+.detail-grid .panel:first-child {
+  margin-top: 0;
+}
+.meta {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-4) 0 0;
+}
+.meta dt {
+  font-size: var(--text-caption);
+  color: var(--color-muted);
+  font-weight: 700;
+}
+.meta dd {
+  margin: 0;
+}
+.prewrap {
+  white-space: pre-wrap;
+}
+.impact {
+  margin: var(--space-3) 0 0;
+  padding-left: 18px;
+  color: var(--color-muted);
+}
+
+@media (max-width: 1024px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+  .toolbar > input {
+    grid-column: 1 / -1;
+  }
+}
+/* 모바일: 표 → 카드 (UI 설계서 §5) */
+@media (max-width: 760px) {
+  .table thead {
+    display: none;
+  }
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+  .table tr {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+  .table td {
+    border: 0;
+    padding: 4px 0;
+    display: flex;
+    gap: var(--space-3);
+  }
+  .table td::before {
+    content: attr(data-label);
+    flex: 0 0 56px;
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    font-weight: 700;
+  }
+  .table td:first-child {
+    display: block;
+  }
+  .table td:first-child::before {
+    display: none;
+  }
+}
+@media (max-width: 620px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+  .row-actions {
+    width: 100%;
+  }
+  .row-actions > * {
+    flex: 1;
+  }
+}

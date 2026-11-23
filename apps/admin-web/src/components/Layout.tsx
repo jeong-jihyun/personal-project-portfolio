@@ -3,6 +3,9 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { useToast } from './Toast';
 
+/** 현재 완료된 개발 단계. 이 값보다 큰 단계의 메뉴는 '준비 중'으로 표시한다. */
+export const CURRENT_STEP = 6;
+
 export interface NavItem {
   path: string;
   label: string;
@@ -86,7 +89,7 @@ function SideLink({ item }: { item: NavItem }) {
         {item.icon}
       </span>
       <span>{item.label}</span>
-      {item.step > 5 && <span className="nav-soon">{item.step}단계</span>}
+      {item.step > CURRENT_STEP && <span className="nav-soon">{item.step}단계</span>}
     </NavLink>
   );
 }
