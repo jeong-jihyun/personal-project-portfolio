@@ -1,0 +1,27 @@
+{
+  "name": "personal-project-portfolio",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Personal Project Portfolio v2.0 — Admin Web, Public Web, Backend API",
+  "packageManager": "pnpm@8.15.6",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r --workspace-concurrency=1 build",
+    "build:shared": "pnpm --filter @ppp/shared build",
+    "dev": "pnpm build:shared && concurrently -n api,admin,public -c blue,magenta,green \"pnpm --filter @ppp/api dev\" \"pnpm --filter @ppp/admin-web dev\" \"pnpm --filter @ppp/public-web dev\"",
+    "start": "pnpm --filter @ppp/api start",
+    "test": "pnpm build:shared && pnpm -r test",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "db:generate": "pnpm --filter @ppp/api db:generate",
+    "db:migrate": "pnpm --filter @ppp/api db:migrate",
+    "db:seed": "pnpm --filter @ppp/api db:seed",
+    "vercel-build": "node scripts/vercel-build.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7",
+    "esbuild": "^0.25",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@ppp/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Design tokens and base component styles shared by Admin Web and Public Web",
+  "exports": {
+    "./tokens.css": "./tokens.css",
+    "./base.css": "./base.css"
+  },
+  "files": ["tokens.css", "base.css"]
+}

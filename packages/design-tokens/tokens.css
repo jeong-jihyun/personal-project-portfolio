@@ -1,0 +1,64 @@
+/*
+ * Personal Project Portfolio — Design Tokens v2.0 (디자인 시스템 §2)
+ * Admin/Public 두 화면이 컬러·타이포·간격 토큰을 공유한다. 레이아웃과 정보 밀도는 공유하지 않는다.
+ */
+:root {
+  /* Color */
+  --color-ink: #17243a;
+  --color-primary: #315eab;
+  --color-primary-hover: #284f92;
+  --color-primary-soft: #e9effa;
+  --color-accent: #6d8fe8;
+  --color-canvas: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-border: #e4e9f1;
+  --color-border-strong: #cfd8e5;
+  /* 본문 보조 텍스트: 흰 배경 대비 4.5:1 이상(WCAG 2.1 AA) */
+  --color-muted: #5b6678;
+  --color-success: #16845b;
+  --color-success-soft: #e8f6ef;
+  --color-warning: #b7791f;
+  --color-warning-soft: #fdf3e1;
+  --color-danger: #c44545;
+  --color-danger-soft: #fdeeee;
+  --color-neutral-soft: #eef1f5;
+  --color-focus: #6d8fe8;
+
+  /* Typography */
+  --font-sans: 'Pretendard', 'Noto Sans KR', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --text-h1: 30px;
+  --leading-h1: 38px;
+  --text-h2: 22px;
+  --leading-h2: 30px;
+  --text-h3: 18px;
+  --leading-h3: 26px;
+  --text-body: 14px;
+  --leading-body: 22px;
+  --text-caption: 12px;
+  --leading-caption: 18px;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radius */
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --radius-dialog: 20px;
+  --radius-pill: 999px;
+
+  /* Shadow: 겹침이 필요한 표면에만 사용 */
+  --shadow-overlay: 0 25px 70px rgba(16, 29, 50, 0.22);
+  --shadow-raised: 0 12px 35px rgba(25, 45, 75, 0.08);
+
+  /* Control size */
+  --control-height: 40px;
+  --touch-target: 44px;
+}

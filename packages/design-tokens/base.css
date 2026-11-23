@@ -1,0 +1,385 @@
+/*
+ * 공통 기본 스타일과 컴포넌트 기준 (디자인 시스템 §3, §5).
+ * Button / Form / Status Badge / Tag / Toast / Dialog / Skeleton.
+ */
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+h1 {
+  font-size: var(--text-h1);
+  line-height: var(--leading-h1);
+}
+h2 {
+  font-size: var(--text-h2);
+  line-height: var(--leading-h2);
+}
+h3 {
+  font-size: var(--text-h3);
+  line-height: var(--leading-h3);
+}
+p {
+  margin: 0 0 var(--space-3);
+}
+a {
+  color: var(--color-primary);
+}
+img {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* 키보드 포커스 표시 */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -60px;
+  z-index: 100;
+  background: var(--color-ink);
+  color: #fff;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+}
+.skip-link:focus {
+  top: var(--space-4);
+}
+
+.muted {
+  color: var(--color-muted);
+}
+.caption {
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--color-muted);
+}
+.eyebrow {
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Button: Primary / Secondary / Tertiary / Danger ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-color: var(--color-border-strong);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-canvas);
+}
+.btn-tertiary {
+  background: transparent;
+  color: var(--color-primary);
+  padding: 0 var(--space-2);
+}
+.btn-tertiary:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+.btn-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+.btn-danger:hover:not(:disabled) {
+  background: #f9dcdc;
+}
+.btn-sm {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-caption);
+}
+
+/* ── Form ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-4);
+  min-width: 0;
+}
+.field label,
+.field .label {
+  font-weight: 700;
+  font-size: var(--text-caption);
+}
+.field .required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+.input,
+.field input:not([type='checkbox']):not([type='radio']),
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: var(--control-height);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  padding: 9px 12px;
+  background: var(--color-surface);
+}
+.field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.field [aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+.field .help {
+  font-size: var(--text-caption);
+  color: var(--color-muted);
+}
+.field .error {
+  font-size: var(--text-caption);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  cursor: pointer;
+}
+.checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Status Badge: 색상 + 텍스트 + 아이콘 ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+  background: var(--color-neutral-soft);
+  color: #4a5568;
+}
+.badge-planned {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.badge-in_progress {
+  background: var(--color-warning-soft);
+  color: #8a5a12;
+}
+.badge-completed {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+.badge-on_hold {
+  background: var(--color-neutral-soft);
+  color: #4a5568;
+}
+.badge-public,
+.badge-published {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+.badge-private,
+.badge-draft {
+  background: var(--color-neutral-soft);
+  color: #4a5568;
+}
+.badge-featured {
+  background: #fff6db;
+  color: #7a5a00;
+}
+
+.tag {
+  display: inline-block;
+  font-size: var(--text-caption);
+  color: #4a5a72;
+  background: var(--color-neutral-soft);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  margin: 0 4px 4px 0;
+}
+
+/* ── Toast ── */
+.toast-region {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.toast {
+  background: var(--color-ink);
+  color: #fff;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-overlay);
+  max-width: min(360px, calc(100vw - 32px));
+}
+.toast-error {
+  background: var(--color-danger);
+}
+
+/* ── Dialog ── */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 29, 50, 0.66);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  z-index: 50;
+}
+.dialog {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-dialog);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-overlay);
+}
+.dialog-sm {
+  width: min(440px, 100%);
+}
+.dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  flex-wrap: wrap;
+}
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, #eceff4 25%, #f6f8fb 37%, #eceff4 63%);
+  background-size: 400% 100%;
+  animation: skeleton 1.4s ease infinite;
+  border-radius: var(--radius-control);
+  min-height: 16px;
+}
+@keyframes skeleton {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* ── State blocks ── */
+.state {
+  text-align: center;
+  padding: var(--space-12) var(--space-4);
+  color: var(--color-muted);
+}
+.state h2,
+.state h3 {
+  color: var(--color-ink);
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 620px) {
+  .btn {
+    min-height: var(--touch-target);
+  }
+  .toast-region {
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
