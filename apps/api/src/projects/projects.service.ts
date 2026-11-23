@@ -1,7 +1,7 @@
 /** F-001 프로젝트 관리. 모든 조회·변경은 ownerId로 범위를 제한하고, 남의 리소스는 404로 숨긴다. */
 import { randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, inArray, max, ne, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, max, ne, or, sql, type SQL } from 'drizzle-orm';
 import {
   PROJECT_STATUSES,
   slugify,
@@ -25,6 +25,7 @@ import { toProjectDetail, toProjectSummaries, type ProjectRow } from './project.
 
 type CreateInput = z.output<typeof projectCreateSchema>;
 type UpdateInput = z.output<typeof projectUpdateSchema>;
+type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 const SORTABLE = {
   updatedAt: projects.updatedAt,
@@ -77,8 +78,8 @@ export class ProjectsService {
   }
 
   async create(ownerId: string, input: CreateInput): Promise<ProjectDetailDto> {
-    const { skillIds, slug: requestedSlug, ...fields } = input;
-    await this.assertOwnedSkills(ownerId, skillIds);
+    const { skillIds, keywords, slug: requestedSlug, ...fields } = input;
+    if (!keywords) await this.assertOwnedSkills(ownerId, skillIds);
     const slug = requestedSlug ? await this.assertSlugFree(requestedSlug) : await this.generateSlug(fields.title);
 
     const row = await this.db.transaction(async (tx) => {
@@ -90,8 +91,9 @@ export class ProjectsService {
         .insert(projects)
         .values({ ...fields, ownerId, slug, sortOrder: Number(last?.maxOrder ?? 0) + 1 })
         .returning();
-      if (skillIds?.length) {
-        await tx.insert(projectSkills).values(skillIds.map((skillId) => ({ projectId: created!.id, skillId })));
+      const linkIds = keywords ? await this.resolveKeywords(tx, ownerId, keywords) : skillIds;
+      if (linkIds?.length) {
+        await tx.insert(projectSkills).values(linkIds.map((skillId) => ({ projectId: created!.id, skillId })));
       }
       await this.activity.log(
         { actorId: ownerId, entityType: 'PROJECT', entityId: created!.id, action: 'CREATE', summary: `프로젝트 등록: ${created!.title}` },
@@ -104,7 +106,7 @@ export class ProjectsService {
 
   async update(ownerId: string, id: string, input: UpdateInput): Promise<ProjectDetailDto> {
     const current = await this.findOwned(ownerId, id);
-    const { skillIds, slug, ...fields } = input;
+    const { skillIds, keywords, slug, ...fields } = input;
 
     // 기간 검증은 기존 값과 합친 결과로 한다 (한쪽만 바꾸는 PATCH 대비).
     const startDate = fields.startDate !== undefined ? fields.startDate : current.startDate;
@@ -114,7 +116,7 @@ export class ProjectsService {
         { path: 'endDate', message: '종료일은 시작일보다 빠를 수 없습니다.' },
       ]);
     }
-    await this.assertOwnedSkills(ownerId, skillIds);
+    if (!keywords) await this.assertOwnedSkills(ownerId, skillIds);
     const nextSlug = slug && slug !== current.slug ? await this.assertSlugFree(slug, id) : undefined;
 
     const values = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
@@ -124,9 +126,10 @@ export class ProjectsService {
         .set({ ...values, ...(nextSlug ? { slug: nextSlug } : {}), updatedAt: new Date() })
         .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)))
         .returning();
-      if (skillIds) {
+      const linkIds = keywords ? await this.resolveKeywords(tx, ownerId, keywords) : skillIds;
+      if (linkIds) {
         await tx.delete(projectSkills).where(eq(projectSkills.projectId, id));
-        if (skillIds.length) await tx.insert(projectSkills).values(skillIds.map((skillId) => ({ projectId: id, skillId })));
+        if (linkIds.length) await tx.insert(projectSkills).values(linkIds.map((skillId) => ({ projectId: id, skillId })));
       }
       await this.activity.log(
         { actorId: ownerId, entityType: 'PROJECT', entityId: id, action: 'UPDATE', summary: `프로젝트 수정: ${updated!.title}` },
@@ -166,6 +169,35 @@ export class ProjectsService {
       .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
     if (!row) throw notFound('프로젝트');
     return row;
+  }
+
+  /**
+   * 직접 입력한 키워드를 키워드(skills) 항목 ID로 바꾼다.
+   * 대소문자를 무시하고 기존 항목을 재사용하며, 없으면 새로 만든다. 입력 순서를 유지한다.
+   */
+  private async resolveKeywords(tx: Tx, ownerId: string, keywords: string[]): Promise<string[]> {
+    if (keywords.length === 0) return [];
+    const lowered = keywords.map((k) => k.toLowerCase());
+    const findExisting = () =>
+      tx
+        .select({ id: skills.id, name: skills.name })
+        .from(skills)
+        .where(and(eq(skills.ownerId, ownerId), inArray(sql<string>`lower(${skills.name})`, lowered)));
+
+    const existing = await findExisting();
+    const have = new Set(existing.map((e) => e.name.toLowerCase()));
+    const missing = keywords.filter((k) => !have.has(k.toLowerCase()));
+    if (missing.length) {
+      const [last] = await tx.select({ n: max(skills.displayOrder) }).from(skills).where(eq(skills.ownerId, ownerId));
+      const base = Number(last?.n ?? 0);
+      await tx
+        .insert(skills)
+        .values(missing.map((name, i) => ({ ownerId, name, category: 'OTHER' as const, displayOrder: base + i + 1 })))
+        .onConflictDoNothing();
+    }
+    const all = missing.length ? await findExisting() : existing;
+    const byLower = new Map(all.map((e) => [e.name.toLowerCase(), e.id]));
+    return lowered.map((k) => byLower.get(k)).filter((v): v is string => !!v);
   }
 
   private async assertOwnedSkills(ownerId: string, skillIds: string[] | undefined): Promise<void> {

@@ -128,6 +128,43 @@ export const listQuerySchema = z.object({
 });
 export type ListQuery = z.infer<typeof listQuerySchema>;
 
+// ── 키워드 (#TypeScript #React …) ────────────────────
+export const MAX_KEYWORDS = 20;
+export const MAX_KEYWORD_LENGTH = 40;
+
+/** 앞의 #과 공백을 떼고 다듬는다. 빈 문자열이면 무시 대상. */
+export function normalizeKeyword(raw: string): string {
+  return raw.replace(/^[#\s]+/, '').replace(/\s+/g, ' ').trim();
+}
+
+/** 대소문자 무시 중복 제거 (먼저 나온 표기를 유지) */
+export function dedupeKeywords(list: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const k of list.map(normalizeKeyword)) {
+    if (!k || seen.has(k.toLowerCase())) continue;
+    seen.add(k.toLowerCase());
+    out.push(k);
+  }
+  return out;
+}
+
+const keywordItem = z
+  .string()
+  .transform(normalizeKeyword)
+  .pipe(
+    z
+      .string()
+      .min(1, '빈 키워드는 넣을 수 없습니다.')
+      .max(MAX_KEYWORD_LENGTH, `키워드는 ${MAX_KEYWORD_LENGTH}자 이하로 입력하세요.`)
+      .refine((v) => !/[,<>]/.test(v), '쉼표(,)와 < > 는 쓸 수 없습니다.'),
+  );
+
+export const keywordsSchema = z
+  .array(keywordItem)
+  .max(MAX_KEYWORDS, `키워드는 ${MAX_KEYWORDS}개까지 넣을 수 있습니다.`)
+  .transform(dedupeKeywords);
+
 // ── 프로젝트 (F-001) ─────────────────────────────────
 const projectFields = {
   title: requiredText(120, '프로젝트명'),
@@ -149,6 +186,9 @@ const projectFields = {
   outcome: optionalText(3000),
   /** 서비스·데모 주소 (http/https만) */
   projectUrl: optionalWebUrl,
+  /** 직접 입력 키워드. 보내면 프로젝트의 키워드 전체를 이 목록으로 바꾼다. */
+  keywords: keywordsSchema.optional(),
+  /** (호환용) 기존 기술 ID로 연결. keywords가 있으면 무시된다. */
   skillIds: z.array(z.uuid()).max(50).optional(),
 };
 
@@ -169,6 +209,7 @@ export const projectUpdateSchema = z
     role: projectFields.role,
     outcome: projectFields.outcome,
     projectUrl: projectFields.projectUrl,
+    keywords: projectFields.keywords,
     skillIds: projectFields.skillIds,
   })
   .superRefine(checkPeriod);

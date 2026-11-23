@@ -4,6 +4,8 @@ import {
   careerUpdateSchema,
   isRepositoryUrl,
   isWebUrl,
+  keywordsSchema,
+  normalizeKeyword,
   projectCreateSchema,
   projectUpdateSchema,
   repositoryCreateSchema,
@@ -78,6 +80,26 @@ describe('URL rules', () => {
 describe('careerSchema', () => {
   it('allows an open-ended (current) career', () => {
     expect(careerSchema.safeParse({ company: 'A', position: 'Dev', startDate: '2020-01-01' }).success).toBe(true);
+  });
+});
+
+describe('keywords', () => {
+  it('strips #, trims, dedupes case-insensitively and keeps first spelling', () => {
+    expect(keywordsSchema.parse(['#TypeScript', ' react ', 'React', '##NestJS', 'Spring   Boot'])).toEqual([
+      'TypeScript',
+      'react',
+      'NestJS',
+      'Spring Boot',
+    ]);
+    expect(normalizeKeyword('  #  GraphQL ')).toBe('GraphQL');
+  });
+
+  it('rejects empty, too long, comma or angle-bracket keywords and more than 20', () => {
+    expect(keywordsSchema.safeParse(['#']).success).toBe(false);
+    expect(keywordsSchema.safeParse(['x'.repeat(41)]).success).toBe(false);
+    expect(keywordsSchema.safeParse(['a,b']).success).toBe(false);
+    expect(keywordsSchema.safeParse(['<script>']).success).toBe(false);
+    expect(keywordsSchema.safeParse(Array.from({ length: 21 }, (_, i) => `k${i}`)).success).toBe(false);
   });
 });
 

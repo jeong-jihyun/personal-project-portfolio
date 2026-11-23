@@ -111,6 +111,31 @@ describe('admin projects (F-001)', () => {
     expect(cleared.body.projectUrl).toBeNull();
   });
 
+  it('links free-typed keywords, reusing existing ones case-insensitively', async () => {
+    const before = (await agent.get('/api/v1/admin/skills')).body.items as { id: string; name: string }[];
+    const react = before.find((s) => s.name === 'React')!;
+
+    const created = await agent
+      .post('/api/v1/admin/projects')
+      .send({ title: 'keyword project', keywords: ['#react', 'GraphQL', '#graphql', ' #Spring  Boot '] });
+    expect(created.status).toBe(201);
+    expect(created.body.skills.map((s: { name: string }) => s.name)).toEqual(['React', 'GraphQL', 'Spring Boot']);
+    expect(created.body.skills[0].id).toBe(react.id);
+
+    const after = (await agent.get('/api/v1/admin/skills')).body.items as { name: string }[];
+    expect(after.length).toBe(before.length + 2);
+
+    const replaced = await agent.patch(`/api/v1/admin/projects/${created.body.id}`).send({ keywords: ['TypeScript'] });
+    expect(replaced.body.skills.map((s: { name: string }) => s.name)).toEqual(['TypeScript']);
+
+    const kept = await agent.patch(`/api/v1/admin/projects/${created.body.id}`).send({ role: 'dev' });
+    expect(kept.body.skills.map((s: { name: string }) => s.name)).toEqual(['TypeScript']);
+
+    const bad = await agent.post('/api/v1/admin/projects').send({ title: 'x', keywords: ['<b>'] });
+    expect(bad.status).toBe(400);
+    expect(bad.body.details[0].path).toMatch(/^keywords/);
+  });
+
   it('rejects skills that belong to someone else', async () => {
     const res = await agent
       .post('/api/v1/admin/projects')

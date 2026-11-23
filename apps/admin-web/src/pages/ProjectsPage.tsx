@@ -166,7 +166,7 @@ export function ProjectsPage() {
                         <span className="row-tags">
                           {p.skills.slice(0, 4).map((s) => (
                             <span key={s.id} className="tag">
-                              {s.name}
+                              #{s.name}
                             </span>
                           ))}
                         </span>

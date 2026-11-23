@@ -1,4 +1,4 @@
-/** ADM-03 프로젝트 등록/수정: 기본 정보, 기간, 역할, 성과, 기술 스택, 공개 여부. */
+/** ADM-03 프로젝트 등록/수정: 기본 정보, 키워드, 기간, 역할, 성과, 공개 여부. */
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -11,6 +11,7 @@ import {
   type Visibility,
 } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
+import { KeywordInput } from '../components/KeywordInput';
 import { useToast } from '../components/Toast';
 import { ErrorState, Field } from '../components/ui';
 
@@ -26,7 +27,7 @@ interface FormState {
   endDate: string;
   role: string;
   outcome: string;
-  skillIds: string[];
+  keywords: string[];
 }
 
 const EMPTY: FormState = {
@@ -41,7 +42,7 @@ const EMPTY: FormState = {
   endDate: '',
   role: '',
   outcome: '',
-  skillIds: [],
+  keywords: [],
 };
 
 function fromDetail(p: ProjectDetailDto): FormState {
@@ -57,7 +58,7 @@ function fromDetail(p: ProjectDetailDto): FormState {
     endDate: p.endDate ?? '',
     role: p.role ?? '',
     outcome: p.outcome ?? '',
-    skillIds: p.skills.map((s) => s.id),
+    keywords: p.skills.map((s) => s.name),
   };
 }
 
@@ -150,6 +151,13 @@ export function ProjectFormPage() {
           <Field id="f-summary" label="요약" help="목적·문제·결과를 한두 문장으로 (300자)" error={errors.summary}>
             {(a) => area('summary', a, 2)}
           </Field>
+          <KeywordInput
+            id="f-keywords"
+            value={form.keywords}
+            onChange={(next) => set('keywords', next)}
+            suggestions={skills.map((s) => s.name)}
+            error={errors.keywords}
+          />
           <div className="form-grid">
             <Field id="f-status" label="진행 상태" error={errors.status}>
               {(a) => (
@@ -193,33 +201,6 @@ export function ProjectFormPage() {
           <Field id="f-outcome" label="성과 및 결과" help="근거가 있는 수치만 적고, 추정치를 사실처럼 쓰지 않습니다." error={errors.outcome}>
             {(a) => area('outcome', a)}
           </Field>
-        </section>
-
-        <section className="panel">
-          <h2 className="section-title">기술 스택</h2>
-          {skills.length === 0 ? (
-            <p className="muted">등록된 기술이 없습니다. 기술 등록은 8단계(경력 및 기술)에서 제공합니다.</p>
-          ) : (
-            <fieldset className="chips">
-              <legend className="sr-only">사용한 기술 선택</legend>
-              {skills.map((s) => {
-                const checked = form.skillIds.includes(s.id);
-                return (
-                  <label key={s.id} className={`chip${checked ? ' chip-on' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() =>
-                        set('skillIds', checked ? form.skillIds.filter((x) => x !== s.id) : [...form.skillIds, s.id])
-                      }
-                    />
-                    {s.name}
-                  </label>
-                );
-              })}
-            </fieldset>
-          )}
-          {errors.skillIds && <p className="error">{errors.skillIds}</p>}
         </section>
 
         <div className="form-actions">

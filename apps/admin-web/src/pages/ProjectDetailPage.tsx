@@ -110,8 +110,8 @@ export function ProjectDetailPage() {
                   '-'
                 )}
               </dd>
-              <dt>기술 스택</dt>
-              <dd>{p.skills.length ? p.skills.map((s) => <span key={s.id} className="tag">{s.name}</span>) : '-'}</dd>
+              <dt>키워드</dt>
+              <dd>{p.skills.length ? p.skills.map((s) => <span key={s.id} className="tag">#{s.name}</span>) : '-'}</dd>
             </dl>
           </section>
           <section className="panel">

@@ -21,7 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/', label: '대시보드', icon: '▦', screen: 'ADM-01', step: 5, description: '프로젝트 현황과 최근 활동', mobile: true },
   { path: '/projects', label: '프로젝트 관리', icon: '▤', screen: 'ADM-02~04', step: 6, description: '프로젝트 목록·검색·등록·수정·삭제, 상태와 기간·역할·성과 관리', mobile: true },
   { path: '/repositories', label: 'Git 저장소', icon: '⌘', screen: 'ADM-05', step: 7, description: '프로젝트별 여러 저장소 등록, 브랜치·README·배포 URL, 대표 저장소와 공개 여부', mobile: true },
-  { path: '/careers', label: '경력 및 기술', icon: '▣', screen: 'ADM-06', step: 8, description: '경력(회사·직무·기간)과 기술 스택(분류·순서), 산출물 링크' },
+  { path: '/careers', label: '경력 및 키워드', icon: '▣', screen: 'ADM-06', step: 8, description: '경력(회사·직무·기간), 키워드 정리(이름 변경·병합·삭제), 산출물 링크' },
   { path: '/portfolio', label: '포트폴리오 설정', icon: '◎', screen: 'ADM-07', step: 9, description: '프로필, 대표 프로젝트, 노출 순서, 게시/비게시와 공개 화면 미리보기', mobile: true },
   { path: '/settings', label: '설정', icon: '⚙', screen: 'ADM-08', step: 10, description: '계정, 공개 URL, 기본 메타 정보' },
 ];
