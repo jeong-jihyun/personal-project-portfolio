@@ -11,6 +11,7 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { RepositoriesPage } from './pages/RepositoriesPage';
 import { CareersPage } from './pages/CareersPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage';
 
 function RequireAuth() {
   const { user, loading } = useAuth();
@@ -43,6 +44,7 @@ export function App() {
               <Route path="repositories" element={<RepositoriesPage />} />
               <Route path="careers" element={<CareersPage />} />
               <Route path="portfolio" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
               {NAV_ITEMS.filter((n) => n.step > CURRENT_STEP).map((n) => (
                 <Route key={n.path} path={n.path.slice(1)} element={<ComingSoonPage item={n} />} />
               ))}

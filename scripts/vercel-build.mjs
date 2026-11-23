@@ -117,7 +117,19 @@ for (const [pkg, base] of webApps) {
 }
 
 // ── 라우팅 ────────────────────────────────────────
+// 정적 화면(관리자·공개)에도 보안 헤더를 붙인다. API 응답은 서버가 직접 붙인다.
+const STATIC_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(self), microphone=(), geolocation=()',
+  'Content-Security-Policy':
+    "default-src 'self'; img-src 'self' https: data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+};
 const routes = [
+  { src: '^/(admin|portfolio)(?:/.*)?$', headers: STATIC_HEADERS, continue: true },
+  // 관리자 화면은 검색엔진에 노출하지 않는다
+  { src: '^/admin(?:/.*)?$', headers: { 'X-Robots-Tag': 'noindex, nofollow' }, continue: true },
   { src: '^/api/(.*)$', dest: '/api' },
   // 루트: 공개 화면 → 관리자 화면 → 상태 확인 순으로 있는 것을 연다.
   {

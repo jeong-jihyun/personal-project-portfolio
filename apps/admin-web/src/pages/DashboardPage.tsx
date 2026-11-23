@@ -28,7 +28,7 @@ const ROADMAP: { step: number; title: string; detail: string }[] = [
   { step: 7, title: 'Git 저장소', detail: '여러 저장소 등록, 대표 저장소 1개, 저장소별 공개 여부' },
   { step: 8, title: '경력·키워드·프로필', detail: '프로필·경력 편집, 키워드 정리, 산출물 링크, 스크린샷' },
   { step: 9, title: '공개 포트폴리오', detail: '게시 설정, 공개 화면(홈·프로젝트·상세)' },
-  { step: 10, title: '마무리', detail: '보안 점검, 모바일, 문서' },
+  { step: 10, title: '마무리', detail: '비밀번호 변경, 보안 점검, 안내 문서' },
 ];
 
 export function DashboardPage() {

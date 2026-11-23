@@ -116,6 +116,15 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+/** 비밀번호 변경: 10자 이상, 현재 비밀번호와 달라야 한다 */
+export const passwordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, '현재 비밀번호를 입력하세요.').max(200),
+    newPassword: z.string().min(10, '새 비밀번호는 10자 이상이어야 합니다.').max(200, '200자 이하로 입력하세요.'),
+  })
+  .refine((v) => v.currentPassword !== v.newPassword, { path: ['newPassword'], message: '현재 비밀번호와 다른 비밀번호를 입력하세요.' });
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
+
 // ── 목록 조회 표준 파라미터 ──────────────────────────
 export const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

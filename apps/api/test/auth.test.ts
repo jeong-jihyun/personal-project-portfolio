@@ -81,6 +81,31 @@ describe('auth & sessions', () => {
     expect(allowed.status).toBe(201);
   });
 
+  it('changes the password, keeps this device and logs out other devices', async () => {
+    const thisDevice = await loginAgent(ctx);
+    const otherDevice = await loginAgent(ctx);
+    const url = '/api/v1/auth/session/password';
+
+    const wrong = await thisDevice.put(url).send({ currentPassword: 'nope', newPassword: 'brand-new-password' });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.code).toBe('INVALID_CURRENT_PASSWORD');
+    const short = await thisDevice.put(url).send({ currentPassword: OWNER.password, newPassword: 'short' });
+    expect(short.status).toBe(400);
+    const same = await thisDevice.put(url).send({ currentPassword: OWNER.password, newPassword: OWNER.password });
+    expect(same.status).toBe(400);
+
+    const ok = await thisDevice.put(url).send({ currentPassword: OWNER.password, newPassword: 'brand-new-password' });
+    expect(ok.status).toBe(204);
+    expect((await thisDevice.get('/api/v1/auth/session')).status).toBe(200);
+    expect((await otherDevice.get('/api/v1/auth/session')).status).toBe(401);
+    expect((await ctx.http.post('/api/v1/auth/session').send(OWNER)).status).toBe(401);
+    expect((await ctx.http.post('/api/v1/auth/session').send({ email: OWNER.email, password: 'brand-new-password' })).status).toBe(201);
+    expect((await ctx.http.put(url).send({ currentPassword: 'a', newPassword: 'b'.repeat(10) })).status).toBe(401);
+
+    // 다음 테스트를 위해 원래대로
+    await thisDevice.put(url).send({ currentPassword: 'brand-new-password', newPassword: OWNER.password });
+  });
+
   it('rate-limits repeated failed logins', async () => {
     const creds = { email: 'limit@example.com', password: 'wrong-password' };
     for (let i = 0; i < 5; i++) {

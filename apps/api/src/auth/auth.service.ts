@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, gt, lt } from 'drizzle-orm';
+import { and, eq, gt, lt, ne } from 'drizzle-orm';
 import type { LoginInput, UserDto } from '@ppp/shared';
 import { AppError } from '../common/errors.js';
 import { CONFIG, DB } from '../common/tokens.js';
@@ -8,7 +8,7 @@ import type { AppConfig } from '../config.js';
 import type { Database } from '../db/database.js';
 import { sessions, users } from '../db/schema.js';
 import { ActivityService } from '../activity/activity.service.js';
-import { DUMMY_PASSWORD_HASH, verifyPassword } from './password.js';
+import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from './password.js';
 
 export const SESSION_COOKIE = 'pps_session';
 
@@ -73,6 +73,23 @@ export class AuthService {
       .innerJoin(users, eq(users.id, sessions.userId))
       .where(and(eq(sessions.id, hashToken(token)), gt(sessions.expiresAt, new Date())));
     return row ?? null;
+  }
+
+  /** 비밀번호 변경: 현재 비밀번호 확인 → 새 해시 저장 → 지금 기기를 뺀 다른 모든 로그인 해제 */
+  async changePassword(userId: string, currentToken: string | undefined, currentPassword: string, newPassword: string): Promise<void> {
+    const [user] = await this.db.select().from(users).where(eq(users.id, userId));
+    if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
+      throw new AppError(400, 'INVALID_CURRENT_PASSWORD', '현재 비밀번호가 올바르지 않습니다.', [
+        { path: 'currentPassword', message: '현재 비밀번호가 올바르지 않습니다.' },
+      ]);
+    }
+    const passwordHash = await hashPassword(newPassword);
+    await this.db.transaction(async (tx) => {
+      await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));
+      const keep = currentToken ? hashToken(currentToken) : '';
+      await tx.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.id, keep)));
+      await this.activity.log({ actorId: userId, entityType: 'SESSION', action: 'UPDATE', summary: '비밀번호 변경 (다른 기기 로그인 해제)' }, tx);
+    });
   }
 
   async logout(token: string | undefined): Promise<void> {

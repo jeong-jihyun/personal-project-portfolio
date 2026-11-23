@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import { loginSchema, type LoginInput, type UserDto } from '@ppp/shared';
+import { loginSchema, passwordChangeSchema, type LoginInput, type PasswordChangeInput, type UserDto } from '@ppp/shared';
 import { CurrentUser } from '../common/http.js';
 import { ApiZodBody } from '../common/openapi.js';
 import { CONFIG } from '../common/tokens.js';
@@ -42,6 +42,19 @@ export class AuthController {
   @UseGuards(AuthGuard)
   me(@CurrentUser() user: UserDto): { user: UserDto } {
     return { user };
+  }
+
+  /** 비밀번호 변경 (ADM-08). 이 기기는 로그인 유지, 다른 기기는 로그아웃. */
+  @Put('password')
+  @HttpCode(204)
+  @UseGuards(AuthGuard)
+  @ApiZodBody(passwordChangeSchema)
+  async changePassword(
+    @CurrentUser() user: UserDto,
+    @Req() req: Request,
+    @Body(new ZodPipe(passwordChangeSchema)) body: PasswordChangeInput,
+  ): Promise<void> {
+    await this.auth.changePassword(user.id, req.cookies?.[SESSION_COOKIE], body.currentPassword, body.newPassword);
   }
 
   /** 로그아웃: 서버 세션 삭제 + 쿠키 제거. 로그인 상태가 아니어도 204. */

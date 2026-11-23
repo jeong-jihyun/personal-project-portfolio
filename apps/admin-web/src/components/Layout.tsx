@@ -4,7 +4,7 @@ import { useAuth } from '../auth';
 import { useToast } from './Toast';
 
 /** 현재 완료된 개발 단계. 이 값보다 큰 단계의 메뉴는 '준비 중'으로 표시한다. */
-export const CURRENT_STEP = 9;
+export const CURRENT_STEP = 10;
 
 export interface NavItem {
   path: string;
