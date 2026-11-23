@@ -335,6 +335,19 @@ export const assetUpdateSchema = z.object({
   displayOrder: z.coerce.number().int().min(0).max(10000).optional(),
 });
 
+// ── 스크린샷 ───────────────────────────────────────
+export const SCREENSHOT_MAX_BYTES = 4 * 1024 * 1024;
+export const SCREENSHOT_MAX_PER_PROJECT = 20;
+export const SCREENSHOT_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const;
+
+export const screenshotUpdateSchema = z.object({
+  title: z.string().trim().max(120, '120자 이하로 입력하세요.').optional(),
+  visibility: z.enum(VISIBILITIES).optional(),
+});
+export const screenshotOrderSchema = z.object({
+  assetIds: z.array(z.uuid()).min(1).max(SCREENSHOT_MAX_PER_PROJECT),
+});
+
 // ── 프로필 (F-006) ───────────────────────────────────
 export const profileLinkSchema = z.object({
   label: requiredText(40, '링크 이름'),

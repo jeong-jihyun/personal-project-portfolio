@@ -204,6 +204,10 @@ export const assets = pgTable(
     type: assetTypeEnum('type').notNull().default('DOCUMENT'),
     title: text('title').notNull(),
     url: text('url').notNull(),
+    /** 업로드 파일의 저장소 키 (외부 링크 산출물은 null). 삭제 시 파일도 함께 지운다. */
+    storageKey: text('storage_key'),
+    width: integer('width'),
+    height: integer('height'),
     visibility: visibilityEnum('visibility').notNull().default('PRIVATE'),
     displayOrder: integer('display_order').notNull().default(0),
     createdAt: createdAt(),

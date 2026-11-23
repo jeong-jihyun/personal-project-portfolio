@@ -5,6 +5,7 @@ import type { ProjectDeleteImpactDto, ProjectDetailDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
 import { RepositoryDialog } from '../components/RepositoryDialog';
 import { RepositoryList } from '../components/RepositoryList';
+import { ScreenshotsPanel } from '../components/ScreenshotsPanel';
 import { useToast } from '../components/Toast';
 import { ConfirmDialog, ErrorState, formatPeriod, PublicationBadge, StatusBadge, VisibilityBadge } from '../components/ui';
 
@@ -90,6 +91,8 @@ export function ProjectDetailPage() {
         </div>
       </div>
 
+      <ScreenshotsPanel projectId={p.id} assets={p.assets} onChanged={load} />
+
       <div className="detail-grid">
         <div>
           <section className="panel">
@@ -139,14 +142,11 @@ export function ProjectDetailPage() {
           </section>
           <section className="panel">
             <div className="panel-head">
-              <h2>산출물 ({p.assets.length})</h2>
+              <h2>산출물 링크 ({p.assets.filter((a) => a.type !== 'IMAGE').length})</h2>
               <span className="badge badge-planned">편집은 8단계</span>
             </div>
-            {p.assets.length === 0 ? <p className="muted">등록된 산출물이 없습니다.</p> : null}
+            {p.assets.every((a) => a.type === 'IMAGE') ? <p className="muted">등록된 산출물 링크가 없습니다.</p> : null}
           </section>
-          <p className="caption">
-            등록 {new Date(p.createdAt).toLocaleString('ko-KR')} · 수정 {new Date(p.updatedAt).toLocaleString('ko-KR')}
-          </p>
         </div>
       </div>
 

@@ -4,5 +4,7 @@ import { ActivityModule } from './activity/activity.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
 import { RepositoriesModule } from './repositories/repositories.module.js';
+import { ScreenshotsModule } from './screenshots/screenshots.module.js';
+import { StorageModule } from './storage/storage.module.js';
 
-export const FEATURE_MODULES: Type[] = [ActivityModule, AuthModule, ProjectsModule, RepositoriesModule];
+export const FEATURE_MODULES: Type[] = [StorageModule, ActivityModule, AuthModule, ProjectsModule, RepositoriesModule, ScreenshotsModule];

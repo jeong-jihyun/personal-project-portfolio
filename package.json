@@ -17,7 +17,9 @@
     "db:generate": "pnpm --filter @ppp/api db:generate",
     "db:migrate": "pnpm --filter @ppp/api db:migrate",
     "db:seed": "pnpm --filter @ppp/api db:seed",
-    "vercel-build": "node scripts/vercel-build.mjs"
+    "vercel-build": "node scripts/vercel-build.mjs",
+    "dev:memory": "pnpm build:shared && concurrently -n api,admin -c blue,magenta \"pnpm --filter @ppp/api dev:memory\" \"pnpm --filter @ppp/admin-web dev\"",
+    "db:reset": "pnpm --filter @ppp/api db:reset"
   },
   "devDependencies": {
     "concurrently": "^10.0.7",

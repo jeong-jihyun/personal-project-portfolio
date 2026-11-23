@@ -69,6 +69,10 @@ export interface AssetDto {
   type: AssetType;
   title: string;
   url: string;
+  /** 업로드한 이미지면 true */
+  uploaded: boolean;
+  width: number | null;
+  height: number | null;
   visibility: Visibility;
   displayOrder: number;
   createdAt: string;
@@ -81,6 +85,8 @@ export interface ProjectSummaryDto {
   summary: string | null;
   /** 서비스·데모 주소 */
   projectUrl: string | null;
+  /** 대표 스크린샷 (첫 번째 이미지) */
+  coverImageUrl: string | null;
   status: ProjectStatus;
   visibility: Visibility;
   publicationStatus: PublicationStatus;
@@ -173,6 +179,8 @@ export interface PublicAssetDto {
   type: AssetType;
   title: string;
   url: string;
+  width: number | null;
+  height: number | null;
 }
 
 export interface PublicSkillDto {

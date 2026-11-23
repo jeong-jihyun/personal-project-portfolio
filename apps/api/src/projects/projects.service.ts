@@ -21,6 +21,8 @@ import { likePattern, paginate } from '../common/pagination.js';
 import { DB } from '../common/tokens.js';
 import type { Database } from '../db/database.js';
 import { assets, projects, projectSkills, repositories, skills } from '../db/schema.js';
+import type { FileStorage } from '../storage/file-storage.js';
+import { FILE_STORAGE } from '../storage/storage.module.js';
 import { toProjectDetail, toProjectSummaries, type ProjectRow } from './project.queries.js';
 
 type CreateInput = z.output<typeof projectCreateSchema>;
@@ -40,6 +42,7 @@ export class ProjectsService {
   constructor(
     @Inject(DB) private readonly db: Database,
     @Inject(ActivityService) private readonly activity: ActivityService,
+    @Inject(FILE_STORAGE) private readonly storage: FileStorage,
   ) {}
 
   async list(ownerId: string, q: ListQuery): Promise<Paginated<ProjectSummaryDto>> {
@@ -153,6 +156,7 @@ export class ProjectsService {
   /** 삭제 정책: hard delete. 저장소·산출물·기술 연결은 함께 삭제되고, 기술 항목 자체는 남는다. */
   async remove(ownerId: string, id: string): Promise<void> {
     const current = await this.findOwned(ownerId, id);
+    const files = await this.db.select({ key: assets.storageKey }).from(assets).where(eq(assets.projectId, id));
     await this.db.transaction(async (tx) => {
       await tx.delete(projects).where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
       await this.activity.log(
@@ -160,6 +164,8 @@ export class ProjectsService {
         tx,
       );
     });
+    // 업로드한 스크린샷 파일 정리 (실패해도 삭제 자체는 완료)
+    for (const f of files) if (f.key) await this.storage.delete(f.key).catch(() => undefined);
   }
 
   async findOwned(ownerId: string, id: string): Promise<ProjectRow> {

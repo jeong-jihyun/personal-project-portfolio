@@ -41,6 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message: Array.isArray(message) ? message.join(', ') : String(message),
       };
       if (status === 404) body.message = '요청한 경로를 찾을 수 없습니다.';
+      if (status === 413) body.message = '파일이 너무 큽니다. 4MB 이하로 올려 주세요.';
     } else if (isBodyParserError(exception)) {
       status = exception.status;
       body = {

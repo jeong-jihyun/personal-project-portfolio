@@ -32,7 +32,7 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   if (!req.path.startsWith('/api/docs')) {
     res.setHeader(
       'Content-Security-Policy',
-      "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+      "default-src 'self'; img-src 'self' https: data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     );
   }
   next();

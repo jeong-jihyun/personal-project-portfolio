@@ -157,7 +157,11 @@ export function ProjectsPage() {
               <tbody>
                 {data.items.map((p) => (
                   <tr key={p.id}>
-                    <td data-label="프로젝트">
+                    <td data-label="프로젝트" className="cell-project">
+                      <Link to={`/projects/${p.id}`} className="row-thumb" aria-hidden="true" tabIndex={-1}>
+                        {p.coverImageUrl ? <img src={p.coverImageUrl} alt="" loading="lazy" /> : <span>▣</span>}
+                      </Link>
+                      <div className="row-main">
                       <Link to={`/projects/${p.id}`} className="row-title">
                         {p.title}
                       </Link>
@@ -171,6 +175,7 @@ export function ProjectsPage() {
                           ))}
                         </span>
                       )}
+                      </div>
                     </td>
                     <td data-label="상태">
                       <StatusBadge status={p.status} />

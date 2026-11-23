@@ -1,5 +1,5 @@
 /** 프로젝트 DTO 조립 (대시보드·프로젝트 목록·상세 공용). */
-import { asc, count, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import type { AssetDto, ProjectDetailDto, ProjectSummaryDto, RepositoryDto } from '@ppp/shared';
 import { toIso } from '../common/pagination.js';
 import type { Database } from '../db/database.js';
@@ -13,7 +13,7 @@ export async function toProjectSummaries(db: Database, rows: ProjectRow[]): Prom
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
 
-  const [repoCounts, skillRows] = await Promise.all([
+  const [repoCounts, skillRows, imageRows] = await Promise.all([
     db
       .select({ projectId: repositories.projectId, n: count() })
       .from(repositories)
@@ -25,7 +25,16 @@ export async function toProjectSummaries(db: Database, rows: ProjectRow[]): Prom
       .innerJoin(skills, eq(skills.id, projectSkills.skillId))
       .where(inArray(projectSkills.projectId, ids))
       .orderBy(asc(skills.displayOrder), asc(skills.name)),
+    db
+      .select({ projectId: assets.projectId, url: assets.url })
+      .from(assets)
+      .where(and(inArray(assets.projectId, ids), eq(assets.type, 'IMAGE')))
+      .orderBy(asc(assets.displayOrder), asc(assets.createdAt)),
   ]);
+
+  // 대표 이미지 = 프로젝트별 첫 번째 이미지
+  const cover = new Map<string, string>();
+  for (const img of imageRows) if (!cover.has(img.projectId)) cover.set(img.projectId, img.url);
 
   const repoCount = new Map(repoCounts.map((r) => [r.projectId, Number(r.n)]));
   const skillMap = new Map<string, { id: string; name: string }[]>();
@@ -41,6 +50,7 @@ export async function toProjectSummaries(db: Database, rows: ProjectRow[]): Prom
     slug: r.slug,
     summary: r.summary,
     projectUrl: r.projectUrl,
+    coverImageUrl: cover.get(r.id) ?? null,
     status: r.status,
     visibility: r.visibility,
     publicationStatus: r.publicationStatus,
@@ -82,6 +92,9 @@ export function toAssetDto(a: AssetRow): AssetDto {
     type: a.type,
     title: a.title,
     url: a.url,
+    uploaded: !!a.storageKey,
+    width: a.width,
+    height: a.height,
     visibility: a.visibility,
     displayOrder: a.displayOrder,
     createdAt: toIso(a.createdAt),
