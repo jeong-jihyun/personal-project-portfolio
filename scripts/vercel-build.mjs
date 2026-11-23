@@ -47,8 +47,11 @@ const external = [
   'class-transformer',
   'class-transformer/*',
   'pg-native',
+  // 로컬 전용 PGlite 드라이버: 운영(DATABASE_URL)에서는 불러오지 않으므로 어댑터까지 함께 제외한다.
   '@electric-sql/pglite',
   '@electric-sql/pglite/*',
+  'drizzle-orm/pglite',
+  'drizzle-orm/pglite/*',
   'swagger-ui-dist',
 ];
 
