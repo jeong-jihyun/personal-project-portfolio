@@ -4,7 +4,9 @@ import {
   listQuerySchema,
   projectCreateSchema,
   projectUpdateSchema,
+  publicationSchema,
   type ListQuery,
+  type PublicationInput,
   type UserDto,
 } from '@ppp/shared';
 import type { z } from 'zod';
@@ -46,6 +48,17 @@ export class ProjectsController {
     @Body(new ZodPipe(projectUpdateSchema)) body: z.output<typeof projectUpdateSchema>,
   ) {
     return this.projects.update(user.id, id, body);
+  }
+
+  /** 게시 설정: { publicationStatus?, visibility?, isFeatured? } */
+  @Patch(':projectId/publication')
+  @ApiZodBody(publicationSchema)
+  publication(
+    @CurrentUser() user: UserDto,
+    @Param('projectId', UuidPipe) id: string,
+    @Body(new ZodPipe(publicationSchema)) body: PublicationInput,
+  ) {
+    return this.projects.setPublication(user.id, id, body);
   }
 
   /** 삭제 전 연관 데이터 영향 안내 (UI 설계서 §6) */

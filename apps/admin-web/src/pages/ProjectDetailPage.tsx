@@ -18,6 +18,19 @@ export function ProjectDetailPage() {
   const [impact, setImpact] = useState<ProjectDeleteImpactDto | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [addingRepo, setAddingRepo] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+
+  const setPublication = async (body: Record<string, unknown>, done: string) => {
+    setPublishing(true);
+    try {
+      setProject(await api<ProjectDetailDto>(`/admin/projects/${id}/publication`, { method: 'PATCH', body: JSON.stringify(body) }));
+      toast(done);
+    } catch (e) {
+      toast(e instanceof ApiRequestError ? e.message : '변경하지 못했습니다.', 'error');
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   const load = useCallback(() => {
     setError(null);
@@ -79,6 +92,7 @@ export function ProjectDetailPage() {
             <StatusBadge status={p.status} />
             <VisibilityBadge visibility={p.visibility} />
             <PublicationBadge status={p.publicationStatus} />
+            {p.isFeatured && <span className="badge badge-featured">★ 대표 프로젝트</span>}
           </div>
         </div>
         <div className="row-actions">
@@ -90,6 +104,40 @@ export function ProjectDetailPage() {
           </button>
         </div>
       </div>
+
+      <section className="panel publish-bar" aria-label="공개 화면 게시">
+        <div>
+          <b>{p.publicationStatus === 'PUBLISHED' && p.visibility === 'PUBLIC' ? '공개 화면에 게시 중' : '공개 화면에 보이지 않음'}</b>
+          <span className="caption">
+            {p.publicationStatus === 'PUBLISHED' && p.visibility === 'PUBLIC'
+              ? '방문자가 볼 수 있습니다. 비공개 저장소·스크린샷은 표시되지 않습니다.'
+              : '게시하면 공개 포트폴리오에 표시됩니다.'}
+          </span>
+        </div>
+        <div className="row-actions">
+          {p.publicationStatus === 'PUBLISHED' && p.visibility === 'PUBLIC' && (
+            <a className="btn btn-tertiary" href={`/portfolio/projects/${p.slug}`} target="_blank" rel="noopener">
+              공개 화면 보기 ↗
+            </a>
+          )}
+          <button
+            className="btn btn-secondary"
+            disabled={publishing}
+            onClick={() => setPublication({ isFeatured: !p.isFeatured }, p.isFeatured ? '대표 프로젝트에서 뺐습니다.' : '대표 프로젝트로 지정했습니다.')}
+          >
+            {p.isFeatured ? '대표 해제' : '★ 대표로'}
+          </button>
+          {p.publicationStatus === 'PUBLISHED' && p.visibility === 'PUBLIC' ? (
+            <button className="btn btn-secondary" disabled={publishing} onClick={() => setPublication({ publicationStatus: 'DRAFT' }, '게시를 해제했습니다.')}>
+              게시 해제
+            </button>
+          ) : (
+            <button className="btn btn-primary" disabled={publishing} onClick={() => setPublication({ publicationStatus: 'PUBLISHED' }, '공개 화면에 게시했습니다.')}>
+              게시하기
+            </button>
+          )}
+        </div>
+      </section>
 
       <ScreenshotsPanel projectId={p.id} assets={p.assets} onChanged={load} />
 

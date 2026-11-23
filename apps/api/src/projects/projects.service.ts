@@ -13,6 +13,7 @@ import {
   type ProjectSummaryDto,
   type projectCreateSchema,
   type projectUpdateSchema,
+  type PublicationInput,
 } from '@ppp/shared';
 import type { z } from 'zod';
 import { ActivityService } from '../activity/activity.service.js';
@@ -138,6 +139,27 @@ export class ProjectsService {
         { actorId: ownerId, entityType: 'PROJECT', entityId: id, action: 'UPDATE', summary: `프로젝트 수정: ${updated!.title}` },
         tx,
       );
+      return updated!;
+    });
+    return toProjectDetail(this.db, row);
+  }
+
+  /** F-006 게시 설정: 게시/비게시, 공개 여부, 대표 프로젝트 */
+  async setPublication(ownerId: string, id: string, input: PublicationInput): Promise<ProjectDetailDto> {
+    const current = await this.findOwned(ownerId, id);
+    const values: Partial<typeof projects.$inferInsert> = { updatedAt: new Date() };
+    if (input.publicationStatus) values.publicationStatus = input.publicationStatus;
+    if (input.visibility) values.visibility = input.visibility;
+    if (input.isFeatured !== undefined) values.isFeatured = input.isFeatured;
+    // 게시하려면 공개여야 한다: 게시를 켜면서 비공개면 함께 공개로 바꾼다.
+    if (input.publicationStatus === 'PUBLISHED' && (input.visibility ?? current.visibility) === 'PRIVATE') {
+      values.visibility = 'PUBLIC';
+    }
+    const row = await this.db.transaction(async (tx) => {
+      const [updated] = await tx.update(projects).set(values).where(and(eq(projects.id, id), eq(projects.ownerId, ownerId))).returning();
+      const action = input.publicationStatus === 'PUBLISHED' ? 'PUBLISH' : input.publicationStatus === 'DRAFT' ? 'UNPUBLISH' : 'UPDATE';
+      const label = action === 'PUBLISH' ? '게시' : action === 'UNPUBLISH' ? '게시 해제' : '게시 설정 변경';
+      await this.activity.log({ actorId: ownerId, entityType: 'PROJECT', entityId: id, action, summary: `${label}: ${updated!.title}` }, tx);
       return updated!;
     });
     return toProjectDetail(this.db, row);

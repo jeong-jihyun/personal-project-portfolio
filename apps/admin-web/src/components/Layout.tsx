@@ -47,6 +47,9 @@ export function Layout() {
           PORTFOLIO<span>·</span>STUDIO
         </div>
         <div className="topbar-right">
+          <a className="btn btn-secondary btn-sm" href="/portfolio/" target="_blank" rel="noopener">
+            공개 화면 ↗
+          </a>
           <span className="user-name" title={user?.email}>
             {user?.displayName}
           </span>

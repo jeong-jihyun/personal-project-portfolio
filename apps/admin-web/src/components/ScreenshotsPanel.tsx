@@ -1,6 +1,6 @@
 /**
  * 프로젝트 스크린샷 관리 (데스크톱·모바일).
- * - 데스크톱: 파일 선택 또는 끌어다 놓기 / 모바일: 사진 보관함 선택 또는 카메라 촬영
+ * - 데스크톱: 파일 선택, 끌어다 놓기, Ctrl+V 붙여넣기(캡처 화면) / 모바일: 사진 보관함 선택 또는 카메라 촬영
  * - 첫 번째 이미지가 대표 이미지(프로젝트 목록 썸네일)
  */
 import { useEffect, useRef, useState, type DragEvent } from 'react';
@@ -72,6 +72,26 @@ export function ScreenshotsPanel({ projectId, assets, onChanged }: { projectId: 
     if (ok) toast(`스크린샷 ${ok}장을 올렸습니다.`);
     onChanged();
   };
+
+  // Ctrl+V: 클립보드의 캡처 이미지(Win+Shift+S, Print Screen 등)를 바로 올린다. 글자 입력칸에 붙여넣을 때는 무시.
+  const handleFilesRef = useRef(handleFiles);
+  handleFilesRef.current = handleFiles;
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      const files = Array.from(e.clipboardData?.items ?? [])
+        .filter((i) => i.kind === 'file' && i.type.startsWith('image/'))
+        .map((i) => i.getAsFile())
+        .filter((f): f is File => !!f)
+        .map((f, i) => (f.name && f.name !== 'image.png' ? f : new File([f], `붙여넣은 캡처 ${new Date().toLocaleString('ko-KR')}${i ? ` (${i + 1})` : ''}.png`, { type: f.type })));
+      if (files.length === 0) return;
+      e.preventDefault();
+      void handleFilesRef.current(files);
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, []);
 
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -145,7 +165,10 @@ export function ScreenshotsPanel({ projectId, assets, onChanged }: { projectId: 
               </button>
             </div>
             <p className="caption">
-              <span className="only-pointer">여기로 끌어다 놓아도 됩니다 · </span>PNG·JPG·WebP·GIF, 여러 장 가능 · 자동으로 크기를 줄여 올립니다
+              <span className="only-pointer">
+                캡처 후 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여넣기 또는 여기로 끌어다 놓기 ·{' '}
+              </span>
+              PNG·JPG·WebP·GIF, 여러 장 가능 · 자동으로 크기를 줄여 올립니다
             </p>
           </>
         )}

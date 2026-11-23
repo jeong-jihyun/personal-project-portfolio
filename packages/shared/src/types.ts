@@ -194,6 +194,7 @@ export interface PublicProjectSummaryDto {
   title: string;
   summary: string | null;
   projectUrl: string | null;
+  coverImageUrl: string | null;
   status: ProjectStatus;
   isFeatured: boolean;
   startDate: string | null;
