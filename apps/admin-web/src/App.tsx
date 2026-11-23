@@ -1,0 +1,53 @@
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './auth';
+import { Layout, NAV_ITEMS } from './components/Layout';
+import { ToastProvider } from './components/Toast';
+import { ComingSoonPage } from './pages/ComingSoonPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+
+function RequireAuth() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) {
+    return (
+      <div className="boot" role="status">
+        <span className="sr-only">로그인 상태 확인 중</span>
+        <div className="skeleton" style={{ width: 220, height: 20 }} />
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  return <Layout />;
+}
+
+export function App() {
+  return (
+    <BrowserRouter basename="/admin">
+      <ToastProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route element={<RequireAuth />}>
+              <Route index element={<DashboardPage />} />
+              {NAV_ITEMS.filter((n) => n.path !== '/').map((n) => (
+                <Route key={n.path} path={n.path.slice(1)} element={<ComingSoonPage item={n} />} />
+              ))}
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </ToastProvider>
+    </BrowserRouter>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="state">
+      <h2>페이지를 찾을 수 없습니다</h2>
+      <p>주소를 확인하거나 왼쪽 메뉴에서 이동하세요.</p>
+    </div>
+  );
+}
+

@@ -105,6 +105,7 @@ const webApps = [
   ['public-web', 'portfolio'],
 ];
 const spaRoutes = [];
+const builtBases = [];
 for (const [pkg, base] of webApps) {
   const pkgJson = path.join(root, 'apps', pkg, 'package.json');
   if (!existsSync(pkgJson)) continue;
@@ -112,12 +113,20 @@ for (const [pkg, base] of webApps) {
   run(`pnpm --filter @ppp/${pkg} build`);
   cpSync(path.join(root, 'apps', pkg, 'dist'), path.join(out, 'static', base), { recursive: true });
   spaRoutes.push({ src: `^/${base}(?:/.*)?$`, dest: `/${base}/index.html` });
+  builtBases.push(base);
 }
 
 // ── 라우팅 ────────────────────────────────────────
 const routes = [
   { src: '^/api/(.*)$', dest: '/api' },
-  { src: '^/$', status: 302, headers: { Location: spaRoutes.length ? '/portfolio/' : '/api/v1/health' } },
+  // 루트: 공개 화면 → 관리자 화면 → 상태 확인 순으로 있는 것을 연다.
+  {
+    src: '^/$',
+    status: 302,
+    headers: {
+      Location: builtBases.includes('portfolio') ? '/portfolio/' : builtBases.includes('admin') ? '/admin/' : '/api/v1/health',
+    },
+  },
   { handle: 'filesystem' },
   ...spaRoutes,
 ];
