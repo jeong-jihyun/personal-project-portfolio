@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PROJECT_STATUSES, PROJECT_STATUS_LABEL, type Paginated, type ProjectSummaryDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
-import { ErrorState, Pagination, PublicationBadge, StatusBadge, VisibilityBadge } from '../components/ui';
+import { useToast } from '../components/Toast';
+import { ErrorState, Pagination, StatusBadge } from '../components/ui';
 
 const PAGE_SIZE = 10;
 const SORTS = [
@@ -24,6 +25,33 @@ export function ProjectsPage() {
   const [query, setQuery] = useState(q);
   const [data, setData] = useState<Paginated<ProjectSummaryDto> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+  const toast = useToast();
+
+  /** 공개 화면 노출 스위치: 켜면 공개+게시, 끄면 비공개+게시 해제 (화면을 먼저 바꾸고 실패하면 되돌림) */
+  const togglePublic = async (p: ProjectSummaryDto) => {
+    const on = !(p.visibility === 'PUBLIC' && p.publicationStatus === 'PUBLISHED');
+    const patch = on
+      ? ({ visibility: 'PUBLIC', publicationStatus: 'PUBLISHED' } as const)
+      : ({ visibility: 'PRIVATE', publicationStatus: 'DRAFT' } as const);
+    const setRow = (v: Partial<ProjectSummaryDto>) =>
+      setData((d) => (d ? { ...d, items: d.items.map((x) => (x.id === p.id ? { ...x, ...v } : x)) } : d));
+    setRow(patch);
+    setBusyIds((b) => new Set(b).add(p.id));
+    try {
+      await api(`/admin/projects/${p.id}/publication`, { method: 'PATCH', body: JSON.stringify(patch) });
+      toast(on ? `'${p.title}' 공개 화면에 보입니다.` : `'${p.title}' 공개 화면에서 숨겼습니다.`);
+    } catch (e) {
+      setRow({ visibility: p.visibility, publicationStatus: p.publicationStatus });
+      toast(e instanceof ApiRequestError ? e.message : '바꾸지 못했습니다. 다시 시도해 주세요.');
+    } finally {
+      setBusyIds((b) => {
+        const n = new Set(b);
+        n.delete(p.id);
+        return n;
+      });
+    }
+  };
 
   const update = (patch: Record<string, string>) => {
     const next = new URLSearchParams(params);
@@ -160,7 +188,7 @@ export function ProjectsPage() {
                 <tr>
                   <th scope="col">프로젝트</th>
                   <th scope="col">상태</th>
-                  <th scope="col">공개 · 게시</th>
+                  <th scope="col">공개 화면</th>
                   <th scope="col">기간</th>
                   <th scope="col" className="num">저장소</th>
                   <th scope="col">수정일</th>
@@ -203,10 +231,7 @@ export function ProjectsPage() {
                       <StatusBadge status={p.status} />
                     </td>
                     <td data-label="공개">
-                      <div className="badges">
-                        <VisibilityBadge visibility={p.visibility} />
-                        <PublicationBadge status={p.publicationStatus} />
-                      </div>
+                      <PublicSwitch p={p} busy={busyIds.has(p.id)} onToggle={() => togglePublic(p)} />
                     </td>
                     <td data-label="기간" className="cell-period">
                       {shortPeriod(p.startDate, p.endDate)}
@@ -252,4 +277,19 @@ function shortDate(iso: string): string {
   const p = (n: number) => String(n).padStart(2, '0');
   if (d.toDateString() === today.toDateString()) return `오늘 ${p(d.getHours())}:${p(d.getMinutes())}`;
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+}
+
+/** 공개 화면 노출 스위치. 공개·게시 중 하나만 켜진 어중간한 상태는 '일부'로 알려 준다. */
+function PublicSwitch({ p, busy, onToggle }: { p: ProjectSummaryDto; busy: boolean; onToggle(): void }) {
+  const on = p.visibility === 'PUBLIC' && p.publicationStatus === 'PUBLISHED';
+  const partial = !on && (p.visibility === 'PUBLIC' || p.publicationStatus === 'PUBLISHED');
+  return (
+    <label className={`pswitch${on ? ' pswitch-on' : ''}`} title={partial ? '공개 또는 게시 중 하나만 켜져 있어 공개 화면에는 보이지 않습니다. 켜면 둘 다 켜집니다.' : undefined}>
+      <input type="checkbox" role="switch" checked={on} disabled={busy} onChange={onToggle} aria-label={`${p.title} 공개 화면 노출`} />
+      <span className="pswitch-track" aria-hidden="true">
+        <span className="pswitch-thumb" />
+      </span>
+      <span className="pswitch-text">{busy ? '저장 중' : on ? '공개' : partial ? '일부' : '비공개'}</span>
+    </label>
+  );
 }

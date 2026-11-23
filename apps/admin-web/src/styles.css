@@ -1494,3 +1494,61 @@ kbd {
     gap: var(--space-1);
   }
 }
+
+/* 목록 공개 화면 노출 스위치 */
+.pswitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-height: var(--touch-target);
+  user-select: none;
+}
+.pswitch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.pswitch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cfd8e5;
+  transition: background 0.18s;
+  flex-shrink: 0;
+}
+.pswitch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 29, 50, 0.25);
+  transition: transform 0.18s;
+}
+.pswitch-on .pswitch-track {
+  background: var(--color-success);
+}
+.pswitch-on .pswitch-thumb {
+  transform: translateX(18px);
+}
+.pswitch input:focus-visible + .pswitch-track {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.pswitch input:disabled + .pswitch-track {
+  opacity: 0.6;
+}
+.pswitch-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.pswitch-on .pswitch-text {
+  color: var(--color-success);
+}
