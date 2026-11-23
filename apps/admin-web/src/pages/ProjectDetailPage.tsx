@@ -100,9 +100,15 @@ export function ProjectDetailPage() {
               <dd>{formatPeriod(p.startDate, p.endDate)}</dd>
               <dt>담당 역할</dt>
               <dd>{p.role || '-'}</dd>
-              <dt>공개 주소</dt>
+              <dt>프로젝트 URL</dt>
               <dd>
-                <code>/portfolio/projects/{p.slug}</code>
+                {p.projectUrl ? (
+                  <a href={p.projectUrl} target="_blank" rel="noopener noreferrer" className="break">
+                    {p.projectUrl} ↗
+                  </a>
+                ) : (
+                  '-'
+                )}
               </dd>
               <dt>기술 스택</dt>
               <dd>{p.skills.length ? p.skills.map((s) => <span key={s.id} className="tag">{s.name}</span>) : '-'}</dd>

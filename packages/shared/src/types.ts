@@ -79,6 +79,8 @@ export interface ProjectSummaryDto {
   title: string;
   slug: string;
   summary: string | null;
+  /** 서비스·데모 주소 */
+  projectUrl: string | null;
   status: ProjectStatus;
   visibility: Visibility;
   publicationStatus: PublicationStatus;
@@ -183,6 +185,7 @@ export interface PublicProjectSummaryDto {
   slug: string;
   title: string;
   summary: string | null;
+  projectUrl: string | null;
   status: ProjectStatus;
   isFeatured: boolean;
   startDate: string | null;

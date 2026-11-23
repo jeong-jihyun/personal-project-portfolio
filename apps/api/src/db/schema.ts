@@ -101,6 +101,8 @@ export const projects = pgTable(
     endDate: date('end_date', { mode: 'string' }),
     role: text('role'),
     outcome: text('outcome'),
+    /** 서비스·데모 주소 (선택) */
+    projectUrl: text('project_url'),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

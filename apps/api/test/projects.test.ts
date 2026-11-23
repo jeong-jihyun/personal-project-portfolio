@@ -95,6 +95,22 @@ describe('admin projects (F-001)', () => {
     expect(res.body).toMatchObject({ summary: 'keep', role: null, status: 'ON_HOLD', skills: [] });
   });
 
+  it('stores a project URL, rejects non-web URLs and clears it with an empty value', async () => {
+    const bad = await agent.post('/api/v1/admin/projects').send({ title: 'url test', projectUrl: 'javascript:alert(1)' });
+    expect(bad.status).toBe(400);
+    expect(bad.body.details[0].path).toBe('projectUrl');
+
+    const created = await agent.post('/api/v1/admin/projects').send({ title: 'url test', projectUrl: 'https://my-service.com' });
+    expect(created.status).toBe(201);
+    expect(created.body.projectUrl).toBe('https://my-service.com');
+
+    const list = await agent.get('/api/v1/admin/projects?q=url%20test');
+    expect(list.body.items[0].projectUrl).toBe('https://my-service.com');
+
+    const cleared = await agent.patch(`/api/v1/admin/projects/${created.body.id}`).send({ projectUrl: '' });
+    expect(cleared.body.projectUrl).toBeNull();
+  });
+
   it('rejects skills that belong to someone else', async () => {
     const res = await agent
       .post('/api/v1/admin/projects')

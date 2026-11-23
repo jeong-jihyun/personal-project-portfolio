@@ -147,6 +147,8 @@ const projectFields = {
   endDate: optionalDate,
   role: optionalText(200),
   outcome: optionalText(3000),
+  /** 서비스·데모 주소 (http/https만) */
+  projectUrl: optionalWebUrl,
   skillIds: z.array(z.uuid()).max(50).optional(),
 };
 
@@ -166,6 +168,7 @@ export const projectUpdateSchema = z
     endDate: projectFields.endDate,
     role: projectFields.role,
     outcome: projectFields.outcome,
+    projectUrl: projectFields.projectUrl,
     skillIds: projectFields.skillIds,
   })
   .superRefine(checkPeriod);

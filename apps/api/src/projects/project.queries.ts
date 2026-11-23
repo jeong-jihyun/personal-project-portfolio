@@ -40,6 +40,7 @@ export async function toProjectSummaries(db: Database, rows: ProjectRow[]): Prom
     title: r.title,
     slug: r.slug,
     summary: r.summary,
+    projectUrl: r.projectUrl,
     status: r.status,
     visibility: r.visibility,
     publicationStatus: r.publicationStatus,

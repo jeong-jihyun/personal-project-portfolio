@@ -77,7 +77,7 @@ export function ProjectsPage() {
           <label className="sr-only" htmlFor="q">
             프로젝트 검색
           </label>
-          <input id="q" className="input" placeholder="이름, 요약, slug 검색" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input id="q" className="input" placeholder="프로젝트 이름, 요약 검색" value={query} onChange={(e) => setQuery(e.target.value)} />
           <label className="sr-only" htmlFor="status">
             상태
           </label>

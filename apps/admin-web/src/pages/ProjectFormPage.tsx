@@ -16,7 +16,7 @@ import { ErrorState, Field } from '../components/ui';
 
 interface FormState {
   title: string;
-  slug: string;
+  projectUrl: string;
   summary: string;
   problem: string;
   description: string;
@@ -31,7 +31,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   title: '',
-  slug: '',
+  projectUrl: '',
   summary: '',
   problem: '',
   description: '',
@@ -47,7 +47,7 @@ const EMPTY: FormState = {
 function fromDetail(p: ProjectDetailDto): FormState {
   return {
     title: p.title,
-    slug: p.slug,
+    projectUrl: p.projectUrl ?? '',
     summary: p.summary ?? '',
     problem: p.problem ?? '',
     description: p.description ?? '',
@@ -144,13 +144,8 @@ export function ProjectFormPage() {
           <Field id="f-title" label="프로젝트명" required error={errors.title}>
             {(a) => text('title', a, { maxLength: 120, autoFocus: !isEdit })}
           </Field>
-          <Field
-            id="f-slug"
-            label="공개 주소(slug)"
-            help="영문 소문자·숫자·하이픈. 비워 두면 프로젝트명으로 자동 생성합니다. 공개 화면 주소: /portfolio/projects/{slug}"
-            error={errors.slug}
-          >
-            {(a) => text('slug', a, { maxLength: 80, placeholder: 'my-project', spellCheck: false })}
+          <Field id="f-projectUrl" label="프로젝트 URL" help="서비스·데모 주소 (선택). 공개 화면에서 바로가기 링크로 보입니다." error={errors.projectUrl}>
+            {(a) => text('projectUrl', a, { type: 'url', inputMode: 'url', maxLength: 2048, placeholder: 'https://my-service.com', spellCheck: false })}
           </Field>
           <Field id="f-summary" label="요약" help="목적·문제·결과를 한두 문장으로 (300자)" error={errors.summary}>
             {(a) => area('summary', a, 2)}
