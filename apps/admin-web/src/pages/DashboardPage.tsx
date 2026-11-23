@@ -25,7 +25,7 @@ const ROADMAP: { step: number; title: string; detail: string }[] = [
   { step: 4, title: '로그인·권한', detail: '세션, 로그인 시도 제한, 변경 이력' },
   { step: 5, title: '관리자 화면 틀', detail: '로그인 화면, 메뉴, 대시보드' },
   { step: 6, title: '프로젝트 관리', detail: '목록·검색·등록·수정·삭제, 대시보드 집계' },
-  { step: 7, title: 'Git 저장소', detail: '여러 저장소, 대표 저장소, 공개 여부' },
+  { step: 7, title: 'Git 저장소', detail: '여러 저장소 등록, 대표 저장소 1개, 저장소별 공개 여부' },
   { step: 8, title: '경력·기술·산출물', detail: '경력, 기술 스택, 산출물 링크' },
   { step: 9, title: '공개 포트폴리오', detail: '게시 설정, 공개 화면' },
   { step: 10, title: '마무리', detail: '보안 점검, 모바일, 문서' },

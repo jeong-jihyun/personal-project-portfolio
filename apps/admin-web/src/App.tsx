@@ -8,6 +8,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectFormPage } from './pages/ProjectFormPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { RepositoriesPage } from './pages/RepositoriesPage';
 
 function RequireAuth() {
   const { user, loading } = useAuth();
@@ -37,6 +38,7 @@ export function App() {
               <Route path="projects/new" element={<ProjectFormPage />} />
               <Route path="projects/:id" element={<ProjectDetailPage key="detail" />} />
               <Route path="projects/:id/edit" element={<ProjectFormPage key="edit" />} />
+              <Route path="repositories" element={<RepositoriesPage />} />
               {NAV_ITEMS.filter((n) => n.step > CURRENT_STEP).map((n) => (
                 <Route key={n.path} path={n.path.slice(1)} element={<ComingSoonPage item={n} />} />
               ))}

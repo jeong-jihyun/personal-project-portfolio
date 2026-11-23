@@ -637,3 +637,62 @@ a.card.kpi:hover {
     flex: 1;
   }
 }
+
+/* ── 7단계: 저장소 ── */
+.toolbar-2 {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+.repo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.repo {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.repo-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.repo-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.repo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--space-4);
+  margin: 0;
+  font-size: var(--text-caption);
+}
+.repo-meta div {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.repo-meta dt {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+.repo-meta dd {
+  margin: 0;
+  min-width: 0;
+}
+@media (max-width: 620px) {
+  .toolbar-2 {
+    grid-template-columns: 1fr;
+  }
+}

@@ -3,5 +3,6 @@ import type { Type } from '@nestjs/common';
 import { ActivityModule } from './activity/activity.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
+import { RepositoriesModule } from './repositories/repositories.module.js';
 
-export const FEATURE_MODULES: Type[] = [ActivityModule, AuthModule, ProjectsModule];
+export const FEATURE_MODULES: Type[] = [ActivityModule, AuthModule, ProjectsModule, RepositoriesModule];

@@ -1,8 +1,10 @@
 /** ADM-04 프로젝트 상세: 개요, 내용, 연결 저장소, 산출물, 삭제(영향 안내). */
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { REPOSITORY_PROVIDER_LABEL, type ProjectDeleteImpactDto, type ProjectDetailDto } from '@ppp/shared';
+import type { ProjectDeleteImpactDto, ProjectDetailDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
+import { RepositoryDialog } from '../components/RepositoryDialog';
+import { RepositoryList } from '../components/RepositoryList';
 import { useToast } from '../components/Toast';
 import { ConfirmDialog, ErrorState, formatPeriod, PublicationBadge, StatusBadge, VisibilityBadge } from '../components/ui';
 
@@ -14,6 +16,7 @@ export function ProjectDetailPage() {
   const [error, setError] = useState<{ status: number; message: string } | null>(null);
   const [impact, setImpact] = useState<ProjectDeleteImpactDto | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [addingRepo, setAddingRepo] = useState(false);
 
   const load = useCallback(() => {
     setError(null);
@@ -118,28 +121,14 @@ export function ProjectDetailPage() {
           <section className="panel">
             <div className="panel-head">
               <h2>연결 저장소 ({p.repositories.length})</h2>
-              <span className="badge badge-planned">편집은 7단계</span>
+              <button className="btn btn-secondary btn-sm" onClick={() => setAddingRepo(true)}>
+                ＋ 저장소 추가
+              </button>
             </div>
             {p.repositories.length === 0 ? (
-              <p className="muted">연결된 저장소가 없습니다.</p>
+              <p className="muted">연결된 저장소가 없습니다. 저장소 URL만 넣으면 이름은 자동으로 채워집니다.</p>
             ) : (
-              <ul className="plain-list">
-                {p.repositories.map((r) => (
-                  <li key={r.id}>
-                    <div className="badges">
-                      <b>{r.name}</b>
-                      {r.isPrimary && <span className="badge badge-featured">★ 대표</span>}
-                      <VisibilityBadge visibility={r.visibility} />
-                    </div>
-                    <span className="caption">
-                      {REPOSITORY_PROVIDER_LABEL[r.provider]} · {r.defaultBranch ?? '브랜치 미지정'}
-                    </span>
-                    <a href={r.url} target="_blank" rel="noopener noreferrer" className="break">
-                      {r.url}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <RepositoryList items={p.repositories} onChanged={load} />
             )}
           </section>
           <section className="panel">
@@ -154,6 +143,17 @@ export function ProjectDetailPage() {
           </p>
         </div>
       </div>
+
+      {addingRepo && (
+        <RepositoryDialog
+          projectId={p.id}
+          onClose={() => setAddingRepo(false)}
+          onSaved={() => {
+            setAddingRepo(false);
+            load();
+          }}
+        />
+      )}
 
       {impact && (
         <ConfirmDialog
