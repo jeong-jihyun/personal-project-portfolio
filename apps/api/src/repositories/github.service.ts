@@ -6,7 +6,8 @@
  *
  * 동기화(sync): 프로젝트 1개 = GitHub 저장소 1개.
  * - GitHub 에 있는데 사이트에 없는 저장소 → 프로젝트를 비공개·비게시로 새로 만든다.
- * - 연결된 프로젝트의 제목(저장소 이름)·요약(설명)·URL(홈페이지)·시작일(만든 날)·마지막 push 시각은 GitHub 값으로 맞춘다.
+ * - 연결된 프로젝트의 요약(설명)·URL(홈페이지)·시작일(만든 날)·마지막 push 시각은 GitHub 값으로 맞춘다.
+ * - 프로젝트명은 처음 만들 때만 저장소 이름으로 채우고, 그 뒤로는 동기화가 바꾸지 않는다(직접 수정 가능).
  * - GitHub 에 없는 프로젝트(직접 만든 것, 지운 저장소)는 건드리지 않는다.
  */
 import { Inject, Injectable } from '@nestjs/common';
@@ -222,8 +223,9 @@ export class GithubService {
 
         // 프로젝트: GitHub 값으로 맞춤 (바뀐 것이 있을 때만 수정 시각 갱신)
         const startDate = r.created_at?.slice(0, 10) ?? null;
+        // 프로젝트명: 처음 만들 때만 저장소 이름, 이후에는 그대로 둔다
         const next = {
-          title: r.name.slice(0, 120),
+          title: isNew ? r.name.slice(0, 120) : p.title,
           summary: r.description?.slice(0, 300) ?? null,
           projectUrl: homepage,
           startDate: !p.endDate || !startDate || startDate <= p.endDate ? startDate : p.startDate,

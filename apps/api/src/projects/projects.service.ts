@@ -39,8 +39,8 @@ const SORTABLE = {
   githubPushedAt: projects.githubPushedAt,
 } as const;
 
-/** GitHub 저장소와 연결된 프로젝트에서 GitHub 값으로 고정되는 필드 (화면에서 보내도 무시) */
-const GITHUB_OWNED = ['title', 'summary', 'projectUrl', 'startDate'] as const;
+/** GitHub 저장소와 연결된 프로젝트에서 GitHub 값으로 고정되는 필드 (화면에서 보내도 무시). 프로젝트명은 직접 바꿀 수 있다. */
+const GITHUB_OWNED = ['summary', 'projectUrl', 'startDate'] as const;
 
 @Injectable()
 export class ProjectsService {

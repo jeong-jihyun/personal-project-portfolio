@@ -112,7 +112,7 @@ export function ProjectFormPage() {
       // 수정 시 빈 값은 ''로 보내 서버가 null(삭제)로 처리하게 한다.
       const saved = await api<ProjectDetailDto>(isEdit ? `/admin/projects/${id}` : '/admin/projects', {
         method: isEdit ? 'PATCH' : 'POST',
-        body: JSON.stringify(gh ? { ...form, title: undefined, summary: undefined, projectUrl: undefined, startDate: undefined } : form),
+        body: JSON.stringify(gh ? { ...form, summary: undefined, projectUrl: undefined, startDate: undefined } : form),
       });
       toast(isEdit ? '프로젝트가 수정되었습니다.' : '프로젝트가 등록되었습니다.');
       navigate(`/projects/${saved.id}`, { replace: true });
@@ -128,9 +128,9 @@ export function ProjectFormPage() {
     }
   };
 
-  const GH_KEYS: (keyof FormState)[] = ['title', 'summary', 'projectUrl', 'startDate'];
+  const GH_KEYS: (keyof FormState)[] = ['summary', 'projectUrl', 'startDate'];
   const locked = (key: keyof FormState) => !!gh && GH_KEYS.includes(key);
-  const ghHelp = gh ? `GitHub(${gh})에서 자동으로 가져옵니다. 바꾸려면 GitHub에서 수정하세요.` : undefined;
+  const ghHelp = gh ? `처음 만들 때 GitHub 저장소 이름으로 채워졌습니다. 자유롭게 바꿀 수 있고, 동기화로 다시 바뀌지 않습니다.` : undefined;
   const text = (key: keyof FormState, a11y: object, extra: object = {}) => (
     <input {...a11y} {...extra} readOnly={locked(key)} className={locked(key) ? 'input-locked' : undefined} value={form[key] as string} onChange={(e) => set(key, e.target.value as never)} />
   );
@@ -156,7 +156,7 @@ export function ProjectFormPage() {
             </p>
           )}
           <Field id="f-title" label="프로젝트명" required help={ghHelp} error={errors.title}>
-            {(a) => text('title', a, { maxLength: 120, autoFocus: !isEdit })}
+            {(a) => text('title', a, { maxLength: 120, autoFocus: !isEdit, placeholder: gh ? gh.split('/')[1] : undefined })}
           </Field>
           <Field id="f-projectUrl" label="프로젝트 URL" help={gh ? 'GitHub 저장소의 Website 값입니다.' : '서비스·데모 주소 (선택). 공개 화면에서 바로가기 링크로 보입니다.'} error={errors.projectUrl}>
             {(a) => text('projectUrl', a, { type: 'url', inputMode: 'url', maxLength: 2048, placeholder: 'https://my-service.com', spellCheck: false })}
