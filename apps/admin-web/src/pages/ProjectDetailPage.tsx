@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { ProjectDeleteImpactDto, ProjectDetailDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
 import { RepositoryDialog } from '../components/RepositoryDialog';
+import { AssetLinksPanel } from '../components/AssetLinksPanel';
 import { RepositoryList } from '../components/RepositoryList';
 import { ScreenshotsPanel } from '../components/ScreenshotsPanel';
 import { useToast } from '../components/Toast';
@@ -188,13 +189,7 @@ export function ProjectDetailPage() {
               <RepositoryList items={p.repositories} onChanged={load} />
             )}
           </section>
-          <section className="panel">
-            <div className="panel-head">
-              <h2>산출물 링크 ({p.assets.filter((a) => a.type !== 'IMAGE').length})</h2>
-              <span className="badge badge-planned">편집은 8단계</span>
-            </div>
-            {p.assets.every((a) => a.type === 'IMAGE') ? <p className="muted">등록된 산출물 링크가 없습니다.</p> : null}
-          </section>
+          <AssetLinksPanel projectId={p.id} assets={p.assets} onChanged={load} />
         </div>
       </div>
 

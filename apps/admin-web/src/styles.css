@@ -979,3 +979,83 @@ kbd {
   display: flex;
   flex-direction: column;
 }
+
+/* ── 8단계: 프로필·경력·키워드·산출물 ── */
+.link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+.link-error {
+  grid-column: 1 / -1;
+}
+.career-row {
+  flex-direction: row !important;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.career-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.career-main p {
+  margin: 4px 0 0;
+}
+.kw-manage {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-2);
+}
+.kw-manage li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: 6px 8px 6px 10px;
+  min-height: 48px;
+}
+.kw-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+.kw-edit {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+.kw-edit .input {
+  min-height: 32px;
+  padding: 4px 8px;
+}
+.asset-form {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) minmax(0, 1.4fr) 90px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  align-items: center;
+}
+.asset-form .error,
+.asset-form .row-actions {
+  grid-column: 1 / -1;
+}
+.asset-form .row-actions {
+  justify-content: flex-end;
+}
+@media (max-width: 620px) {
+  .link-row,
+  .asset-form {
+    grid-template-columns: 1fr;
+  }
+  .career-row {
+    flex-direction: column !important;
+  }
+}
