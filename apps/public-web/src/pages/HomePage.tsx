@@ -1,5 +1,6 @@
 /** PUB-01 홈: 소개 → 프로젝트(태그 + 갤러리 카드) → 경력 미리보기(최근 3개) → 연락 */
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import type { PublicProfileDto } from '@ppp/shared';
 import { publicApi, useLoad } from '../api';
 import { CareerView, careerCount } from '../Career';
@@ -11,6 +12,14 @@ export function HomePage({ profile, profileLoading }: { profile: PublicProfileDt
   const projects = useLoad(() => publicApi.projects(), []);
   const careers = useLoad(() => publicApi.careers(), []);
   const totalCareers = careerCount(careers.data);
+  const { hash, key } = useLocation();
+
+  // #contact 같은 앵커로 들어오면 내용이 다 그려진 뒤 그 위치로 이동 (하단 탭 '연락' 포함)
+  useEffect(() => {
+    if (!hash || projects.loading || careers.loading) return;
+    const id = hash.slice(1);
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }));
+  }, [hash, key, projects.loading, careers.loading]);
 
   return (
     <>

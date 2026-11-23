@@ -1,5 +1,5 @@
 /** Public Web (/portfolio): 로그인 없이 게시된 정보만 열람 (UI 설계서 PUB-01~06) */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { publicApi, useLoad } from './api';
 import { CareerPage } from './pages/CareerPage';
@@ -8,11 +8,16 @@ import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
-  // 같은 화면 안의 #앵커 이동은 그대로 두고, 화면이 바뀔 때만 맨 위로
+  const { pathname, hash, key, search } = useLocation();
+  const prev = useRef({ pathname, search });
+  // 다른 화면으로 이동하거나 같은 탭을 다시 누르면 맨 위로.
+  // #앵커 이동은 HomePage가, 태그·페이지(?keyword, ?page) 변경은 목록이 위치를 처리한다.
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    const p = prev.current;
+    prev.current = { pathname, search };
+    if (hash) return;
+    if (p.pathname !== pathname || p.search === search) window.scrollTo(0, 0);
+  }, [pathname, search, hash, key]);
   return null;
 }
 
@@ -41,6 +46,7 @@ function Shell() {
           <a href="/portfolio/#contact">연락</a>
         </nav>
       </header>
+      <TabBar />
       <main id="main" className="pub-main" tabIndex={-1}>
         <Routes>
           <Route index element={<HomePage profile={profile.data ?? null} profileLoading={profile.loading} />} />
@@ -55,6 +61,39 @@ function Shell() {
         <span className="muted">Personal Project Portfolio</span>
       </footer>
     </>
+  );
+}
+
+/** 모바일 하단 고정 탭 (PC는 상단 메뉴 사용) */
+const ICON = {
+  home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+  projects: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  career: 'M9 6V4h6v2h5a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm0 0h6M3 12h18',
+  contact: 'M3 6h18v12H3zM3 6l9 7 9-7',
+};
+function TabIcon({ d }: { d: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+function TabBar() {
+  return (
+    <nav className="pub-tabbar" aria-label="하단 메뉴">
+      <NavLink to="/" end>
+        <TabIcon d={ICON.home} />홈
+      </NavLink>
+      <NavLink to="/projects">
+        <TabIcon d={ICON.projects} />프로젝트
+      </NavLink>
+      <NavLink to="/career">
+        <TabIcon d={ICON.career} />경력
+      </NavLink>
+      <Link to={{ pathname: '/', hash: '#contact' }}>
+        <TabIcon d={ICON.contact} />연락
+      </Link>
+    </nav>
   );
 }
 
