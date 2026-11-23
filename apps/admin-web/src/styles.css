@@ -1552,3 +1552,28 @@ kbd {
 .pswitch-on .pswitch-text {
   color: var(--color-success);
 }
+.sync-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+@media (max-width: 620px) {
+  .sync-box {
+    align-items: stretch;
+    width: 100%;
+  }
+}
+.input-locked {
+  background: var(--color-neutral-soft) !important;
+  color: #3c4b63;
+  cursor: not-allowed;
+}
+.gh-note {
+  background: var(--color-primary-soft);
+  color: var(--color-ink);
+  border-radius: var(--radius-control);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 0 0 var(--space-4);
+}

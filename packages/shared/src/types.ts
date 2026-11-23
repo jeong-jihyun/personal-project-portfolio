@@ -96,6 +96,10 @@ export interface ProjectSummaryDto {
   sortOrder: number;
   repositoryCount: number;
   skills: Pick<SkillDto, 'id' | 'name'>[];
+  /** 연결된 GitHub 저장소(owner/repo). 있으면 제목·요약·URL·시작일은 GitHub 값으로 고정 */
+  githubRepo: string | null;
+  /** GitHub 마지막 push 시각 */
+  githubPushedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -256,6 +260,17 @@ export interface GithubReposResponse {
   /** 토큰이 있어 비공개 저장소까지 포함했는지 */
   includesPrivate: boolean;
   items: GithubRepoDto[];
+}
+
+export interface GithubSyncResult {
+  /** GitHub 저장소 수 */
+  total: number;
+  /** 새로 만든 프로젝트 */
+  created: number;
+  /** 정보가 바뀐 프로젝트 */
+  updated: number;
+  errors: { fullName: string; message: string }[];
+  syncedAt: string;
 }
 
 export interface GithubImportResult {

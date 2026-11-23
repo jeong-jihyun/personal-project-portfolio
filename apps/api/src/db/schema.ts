@@ -106,11 +106,17 @@ export const projects = pgTable(
     /** 서비스·데모 주소 (선택) */
     projectUrl: text('project_url'),
     sortOrder: integer('sort_order').notNull().default(0),
+    /** 연결된 GitHub 저장소 (owner/repo). 있으면 제목·소개·주소·시작일은 GitHub 값으로 동기화되고 화면에서 고칠 수 없다. */
+    githubRepo: text('github_repo'),
+    /** GitHub 마지막 push 시각 (목록 '깃 최근 변경순' 정렬) */
+    githubPushedAt: timestamp('github_pushed_at', { withTimezone: true }),
+    githubSyncedAt: timestamp('github_synced_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     uniqueIndex('projects_slug_unique').on(t.slug),
+    uniqueIndex('projects_owner_github_repo_unique').on(t.ownerId, t.githubRepo).where(sql`${t.githubRepo} IS NOT NULL`),
     index('projects_owner_idx').on(t.ownerId),
     check('projects_period_check', sql`${t.endDate} IS NULL OR ${t.startDate} IS NULL OR ${t.endDate} >= ${t.startDate}`),
   ],

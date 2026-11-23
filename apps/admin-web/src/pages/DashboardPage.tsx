@@ -62,8 +62,8 @@ export function DashboardPage() {
           <h1>대시보드</h1>
           <p className="muted">{user?.displayName}님, 프로젝트 현황과 포트폴리오 운영 상태를 확인하세요.</p>
         </div>
-        <Link to="/projects/new" className="btn btn-primary">
-          ＋ 프로젝트 등록
+        <Link to="/projects" className="btn btn-primary">
+          프로젝트 관리 →
         </Link>
       </div>
 
@@ -97,7 +97,7 @@ export function DashboardPage() {
                 <div className="skeleton" style={{ height: 160 }} />
               ) : data.recentProjects.length === 0 ? (
                 <div className="state">
-                  아직 프로젝트가 없습니다. <Link to="/projects/new">첫 프로젝트 등록</Link>
+                  아직 프로젝트가 없습니다. <Link to="/projects">프로젝트 관리</Link>에서 GitHub 동기화를 눌러 보세요.
                 </div>
               ) : (
                 <ul className="plain-list">

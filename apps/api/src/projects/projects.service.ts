@@ -1,7 +1,7 @@
 /** F-001 프로젝트 관리. 모든 조회·변경은 ownerId로 범위를 제한하고, 남의 리소스는 404로 숨긴다. */
 import { randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, inArray, max, ne, or, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, inArray, max, ne, or, sql, type SQL } from 'drizzle-orm';
 import {
   PROJECT_STATUSES,
   slugify,
@@ -36,7 +36,11 @@ const SORTABLE = {
   title: projects.title,
   startDate: projects.startDate,
   sortOrder: projects.sortOrder,
+  githubPushedAt: projects.githubPushedAt,
 } as const;
+
+/** GitHub 저장소와 연결된 프로젝트에서 GitHub 값으로 고정되는 필드 (화면에서 보내도 무시) */
+const GITHUB_OWNED = ['title', 'summary', 'projectUrl', 'startDate'] as const;
 
 @Injectable()
 export class ProjectsService {
@@ -61,15 +65,16 @@ export class ProjectsService {
     if (q.visibility) conds.push(eq(projects.visibility, q.visibility));
     const where = and(...conds);
 
-    const sortCol = SORTABLE[(q.sort ?? 'updatedAt') as keyof typeof SORTABLE] ?? projects.updatedAt;
-    const order = q.order === 'asc' ? asc(sortCol) : desc(sortCol);
+    const sortCol = SORTABLE[(q.sort ?? 'githubPushedAt') as keyof typeof SORTABLE] ?? projects.githubPushedAt;
+    // 값이 없는 행(깃 연결 없음 등)은 항상 뒤로
+    const order = q.order === 'asc' ? sql`${sortCol} asc nulls last` : sql`${sortCol} desc nulls last`;
 
     const [rows, [total]] = await Promise.all([
       this.db
         .select()
         .from(projects)
         .where(where)
-        .orderBy(order, desc(projects.createdAt))
+        .orderBy(order, desc(projects.updatedAt), desc(projects.createdAt))
         .limit(q.pageSize)
         .offset((q.page - 1) * q.pageSize),
       this.db.select({ n: count() }).from(projects).where(where),
@@ -110,7 +115,9 @@ export class ProjectsService {
 
   async update(ownerId: string, id: string, input: UpdateInput): Promise<ProjectDetailDto> {
     const current = await this.findOwned(ownerId, id);
-    const { skillIds, keywords, slug, ...fields } = input;
+    const { skillIds, keywords, slug, ...rawFields } = input;
+    const fields: Partial<typeof rawFields> = { ...rawFields };
+    if (current.githubRepo) for (const k of GITHUB_OWNED) delete fields[k];
 
     // 기간 검증은 기존 값과 합친 결과로 한다 (한쪽만 바꾸는 PATCH 대비).
     const startDate = fields.startDate !== undefined ? fields.startDate : current.startDate;

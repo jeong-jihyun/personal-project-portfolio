@@ -60,6 +60,8 @@ export async function toProjectSummaries(db: Database, rows: ProjectRow[]): Prom
     sortOrder: r.sortOrder,
     repositoryCount: repoCount.get(r.id) ?? 0,
     skills: skillMap.get(r.id) ?? [],
+    githubRepo: r.githubRepo,
+    githubPushedAt: r.githubPushedAt ? toIso(r.githubPushedAt) : null,
     createdAt: toIso(r.createdAt),
     updatedAt: toIso(r.updatedAt),
   }));

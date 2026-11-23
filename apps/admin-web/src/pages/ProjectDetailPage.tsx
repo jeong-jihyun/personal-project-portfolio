@@ -179,9 +179,11 @@ export function ProjectDetailPage() {
           <section className="panel">
             <div className="panel-head">
               <h2>연결 저장소 ({p.repositories.length})</h2>
-              <button className="btn btn-secondary btn-sm" onClick={() => setAddingRepo(true)}>
-                ＋ 저장소 추가
-              </button>
+              {!p.githubRepo && (
+                <button className="btn btn-secondary btn-sm" onClick={() => setAddingRepo(true)}>
+                  ＋ 저장소 추가
+                </button>
+              )}
             </div>
             {p.repositories.length === 0 ? (
               <p className="muted">연결된 저장소가 없습니다. 저장소 URL만 넣으면 이름은 자동으로 채워집니다.</p>

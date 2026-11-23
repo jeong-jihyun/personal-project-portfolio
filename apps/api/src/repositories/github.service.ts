@@ -3,13 +3,19 @@
  * - GITHUB_TOKEN 이 있으면 /user/repos 로 비공개까지, 없으면 GITHUB_USERNAME 의 공개 저장소만 읽는다.
  * - 등록 시 프로젝트를 고르지 않으면 저장소 이름으로 새 프로젝트를 '비공개·비게시'로 만들어 붙인다.
  * - 이미 같은 주소로 등록된 저장소는 건너뛴다(여러 번 눌러도 중복이 생기지 않음).
+ *
+ * 동기화(sync): 프로젝트 1개 = GitHub 저장소 1개.
+ * - GitHub 에 있는데 사이트에 없는 저장소 → 프로젝트를 비공개·비게시로 새로 만든다.
+ * - 연결된 프로젝트의 제목(저장소 이름)·요약(설명)·URL(홈페이지)·시작일(만든 날)·마지막 push 시각은 GitHub 값으로 맞춘다.
+ * - GitHub 에 없는 프로젝트(직접 만든 것, 지운 저장소)는 건드리지 않는다.
  */
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import {
   projectCreateSchema,
   repositoryCreateSchema,
   type GithubImportResult,
+  type GithubSyncResult,
   type GithubReposResponse,
   type githubImportSchema,
 } from '@ppp/shared';
@@ -168,6 +174,94 @@ export class GithubService {
         result.created++;
       } catch (e) {
         result.errors.push({ fullName: r.full_name, message: e instanceof Error ? e.message : '등록하지 못했습니다.' });
+      }
+    }
+    return result;
+  }
+
+  /** GitHub 전체 동기화 (목록 열 때·하루 1번·버튼) */
+  async sync(ownerId: string): Promise<GithubSyncResult> {
+    const { list } = await this.fetchAll();
+    const now = new Date();
+    const result: GithubSyncResult = { total: list.length, created: 0, updated: 0, errors: [], syncedAt: now.toISOString() };
+
+    const projRows = await this.db.select().from(projects).where(eq(projects.ownerId, ownerId));
+    const repoRows = await this.db
+      .select({ repo: repositories })
+      .from(repositories)
+      .innerJoin(projects, eq(projects.id, repositories.projectId))
+      .where(eq(projects.ownerId, ownerId));
+    const byGithub = new Map(projRows.filter((p) => p.githubRepo).map((p) => [p.githubRepo!.toLowerCase(), p]));
+    const byId = new Map(projRows.map((p) => [p.id, p]));
+    const repoByUrl = new Map(repoRows.map((r) => [norm(r.repo.url), r.repo]));
+
+    for (const r of list) {
+      const key = r.full_name.toLowerCase();
+      try {
+        const homepage = r.homepage && /^https?:\/\//.test(r.homepage) ? r.homepage : null;
+        let project = byGithub.get(key);
+        let repoRow = repoByUrl.get(norm(r.html_url));
+
+        if (!project && repoRow) {
+          const owner = byId.get(repoRow.projectId);
+          // 저장소 주소로 이미 붙어 있던 프로젝트: 아직 다른 저장소와 연결되지 않았으면 그대로 연결
+          if (owner && !owner.githubRepo) project = owner;
+        }
+        const isNew = !project;
+        if (!project) {
+          const created = await this.projects.create(ownerId, this.projectInput(r));
+          [project] = await this.db.select().from(projects).where(eq(projects.id, created.id));
+          result.created++;
+          if (repoRow) {
+            // 1 프로젝트 = 1 저장소: 다른 프로젝트에 붙어 있던 같은 저장소는 새 프로젝트로 옮긴다
+            await this.db.update(repositories).set({ projectId: project!.id, isPrimary: true, updatedAt: now }).where(eq(repositories.id, repoRow.id));
+            repoRow = { ...repoRow, projectId: project!.id };
+          }
+        }
+        const p = project!;
+
+        // 프로젝트: GitHub 값으로 맞춤 (바뀐 것이 있을 때만 수정 시각 갱신)
+        const startDate = r.created_at?.slice(0, 10) ?? null;
+        const next = {
+          title: r.name.slice(0, 120),
+          summary: r.description?.slice(0, 300) ?? null,
+          projectUrl: homepage,
+          startDate: !p.endDate || !startDate || startDate <= p.endDate ? startDate : p.startDate,
+          githubRepo: r.full_name,
+          githubPushedAt: r.pushed_at ? new Date(r.pushed_at) : null,
+        };
+        const changed =
+          p.title !== next.title ||
+          p.summary !== next.summary ||
+          p.projectUrl !== next.projectUrl ||
+          p.startDate !== next.startDate ||
+          p.githubRepo !== next.githubRepo ||
+          (p.githubPushedAt?.getTime() ?? null) !== (next.githubPushedAt?.getTime() ?? null);
+        await this.db
+          .update(projects)
+          .set({ ...next, githubSyncedAt: now, ...(changed ? { updatedAt: now } : {}) })
+          .where(and(eq(projects.id, p.id), eq(projects.ownerId, ownerId)));
+        if (changed && !isNew) result.updated++;
+
+        // 저장소 행: 없으면 만들고, 있으면 GitHub 값으로 맞춤
+        const repoValues = {
+          provider: 'GITHUB' as const,
+          name: r.name,
+          url: r.html_url,
+          cloneUrl: r.clone_url,
+          defaultBranch: r.default_branch,
+          visibility: r.private ? ('PRIVATE' as const) : ('PUBLIC' as const),
+          readmeUrl: `${r.html_url}#readme`,
+          deploymentUrl: homepage,
+        };
+        if (repoRow) {
+          await this.db.update(repositories).set({ ...repoValues, updatedAt: now }).where(eq(repositories.id, repoRow.id));
+        } else {
+          await this.db.insert(repositories).values({ ...repoValues, projectId: p.id, isPrimary: true, displayOrder: 1 });
+        }
+        byGithub.set(key, { ...p, ...next });
+      } catch (e) {
+        result.errors.push({ fullName: r.full_name, message: e instanceof Error ? e.message : '동기화하지 못했습니다.' });
       }
     }
     return result;

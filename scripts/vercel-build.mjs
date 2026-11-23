@@ -142,5 +142,7 @@ const routes = [
   { handle: 'filesystem' },
   ...spaRoutes,
 ];
-writeFileSync(path.join(out, 'config.json'), JSON.stringify({ version: 3, routes }, null, 2));
+// 하루 1번 GitHub 동기화 (Vercel Hobby 무료: 하루 1회). 18:00 UTC = 한국 03:00. CRON_SECRET 환경변수 필요.
+const crons = [{ path: '/api/v1/cron/github-sync', schedule: '0 18 * * *' }];
+writeFileSync(path.join(out, 'config.json'), JSON.stringify({ version: 3, routes, crons }, null, 2));
 console.log('✔ .vercel/output ready');

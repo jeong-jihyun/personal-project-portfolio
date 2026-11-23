@@ -72,6 +72,8 @@ export function ProjectFormPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** GitHub 저장소와 연결되어 있으면 제목·요약·URL·시작일은 GitHub 값 고정 */
+  const [gh, setGh] = useState<string | null>(null);
 
   useEffect(() => {
     api<{ items: SkillDto[] }>('/admin/skills')
@@ -79,7 +81,10 @@ export function ProjectFormPage() {
       .catch(() => setSkills([]));
     if (isEdit) {
       api<ProjectDetailDto>(`/admin/projects/${id}`)
-        .then((p) => setForm(fromDetail(p)))
+        .then((p) => {
+          setGh(p.githubRepo);
+          setForm(fromDetail(p));
+        })
         .catch((e) => setLoadError(e instanceof ApiRequestError ? e.message : '불러오지 못했습니다.'));
     }
   }, [id, isEdit]);
@@ -107,7 +112,7 @@ export function ProjectFormPage() {
       // 수정 시 빈 값은 ''로 보내 서버가 null(삭제)로 처리하게 한다.
       const saved = await api<ProjectDetailDto>(isEdit ? `/admin/projects/${id}` : '/admin/projects', {
         method: isEdit ? 'PATCH' : 'POST',
-        body: JSON.stringify(form),
+        body: JSON.stringify(gh ? { ...form, title: undefined, summary: undefined, projectUrl: undefined, startDate: undefined } : form),
       });
       toast(isEdit ? '프로젝트가 수정되었습니다.' : '프로젝트가 등록되었습니다.');
       navigate(`/projects/${saved.id}`, { replace: true });
@@ -123,11 +128,14 @@ export function ProjectFormPage() {
     }
   };
 
+  const GH_KEYS: (keyof FormState)[] = ['title', 'summary', 'projectUrl', 'startDate'];
+  const locked = (key: keyof FormState) => !!gh && GH_KEYS.includes(key);
+  const ghHelp = gh ? `GitHub(${gh})에서 자동으로 가져옵니다. 바꾸려면 GitHub에서 수정하세요.` : undefined;
   const text = (key: keyof FormState, a11y: object, extra: object = {}) => (
-    <input {...a11y} {...extra} value={form[key] as string} onChange={(e) => set(key, e.target.value as never)} />
+    <input {...a11y} {...extra} readOnly={locked(key)} className={locked(key) ? 'input-locked' : undefined} value={form[key] as string} onChange={(e) => set(key, e.target.value as never)} />
   );
   const area = (key: keyof FormState, a11y: object, rows = 4) => (
-    <textarea {...a11y} rows={rows} value={form[key] as string} onChange={(e) => set(key, e.target.value as never)} />
+    <textarea {...a11y} rows={rows} readOnly={locked(key)} className={locked(key) ? 'input-locked' : undefined} value={form[key] as string} onChange={(e) => set(key, e.target.value as never)} />
   );
 
   return (
@@ -142,13 +150,18 @@ export function ProjectFormPage() {
       <form className="form-layout" onSubmit={onSubmit} noValidate>
         <section className="panel">
           <h2 className="section-title">기본 정보</h2>
-          <Field id="f-title" label="프로젝트명" required error={errors.title}>
+          {gh && (
+            <p className="gh-note">
+              ⎇ GitHub <a href={`https://github.com/${gh}`} target="_blank" rel="noopener noreferrer">{gh}</a> 과 연결된 프로젝트입니다. 회색 칸은 GitHub 값으로 자동 동기화됩니다.
+            </p>
+          )}
+          <Field id="f-title" label="프로젝트명" required help={ghHelp} error={errors.title}>
             {(a) => text('title', a, { maxLength: 120, autoFocus: !isEdit })}
           </Field>
-          <Field id="f-projectUrl" label="프로젝트 URL" help="서비스·데모 주소 (선택). 공개 화면에서 바로가기 링크로 보입니다." error={errors.projectUrl}>
+          <Field id="f-projectUrl" label="프로젝트 URL" help={gh ? 'GitHub 저장소의 Website 값입니다.' : '서비스·데모 주소 (선택). 공개 화면에서 바로가기 링크로 보입니다.'} error={errors.projectUrl}>
             {(a) => text('projectUrl', a, { type: 'url', inputMode: 'url', maxLength: 2048, placeholder: 'https://my-service.com', spellCheck: false })}
           </Field>
-          <Field id="f-summary" label="요약" help="목적·문제·결과를 한두 문장으로 (300자)" error={errors.summary}>
+          <Field id="f-summary" label="요약" help={gh ? 'GitHub 저장소의 About(설명) 값입니다.' : '목적·문제·결과를 한두 문장으로 (300자)'} error={errors.summary}>
             {(a) => area('summary', a, 2)}
           </Field>
           <KeywordInput
@@ -178,7 +191,7 @@ export function ProjectFormPage() {
                 </select>
               )}
             </Field>
-            <Field id="f-startDate" label="시작일" error={errors.startDate}>
+            <Field id="f-startDate" label="시작일" help={gh ? 'GitHub 저장소를 만든 날' : undefined} error={errors.startDate}>
               {(a) => text('startDate', a, { type: 'date' })}
             </Field>
             <Field id="f-endDate" label="종료일" help="진행 중이면 비워 두세요." error={errors.endDate}>

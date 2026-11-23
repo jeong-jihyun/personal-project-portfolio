@@ -1,13 +1,19 @@
-/** ADM-02 프로젝트 목록: 검색, 상태·공개 필터, 정렬, 페이지네이션. 데스크톱은 표, 모바일은 카드. */
+/**
+ * ADM-02 프로젝트 목록: 검색, 상태·공개 필터, 정렬, 페이지네이션. 데스크톱은 표, 모바일은 카드.
+ * 프로젝트 = GitHub 저장소. 직접 등록하지 않고, 목록을 열 때 GitHub와 동기화한다(10분에 한 번).
+ */
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { PROJECT_STATUSES, PROJECT_STATUS_LABEL, type Paginated, type ProjectSummaryDto } from '@ppp/shared';
+import { PROJECT_STATUSES, PROJECT_STATUS_LABEL, type GithubSyncResult, type Paginated, type ProjectSummaryDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
 import { useToast } from '../components/Toast';
 import { ErrorState, Pagination, StatusBadge } from '../components/ui';
 
 const PAGE_SIZE = 10;
+const SYNC_KEY = 'ppp.githubSyncedAt';
+const SYNC_INTERVAL_MS = 10 * 60 * 1000;
 const SORTS = [
+  { value: 'githubPushedAt:desc', label: '깃 최근 변경순' },
   { value: 'updatedAt:desc', label: '최근 수정순' },
   { value: 'createdAt:desc', label: '최근 등록순' },
   { value: 'title:asc', label: '이름순' },
@@ -19,13 +25,21 @@ export function ProjectsPage() {
   const q = params.get('q') ?? '';
   const status = params.get('status') ?? '';
   const visibility = params.get('visibility') ?? '';
-  const sort = params.get('sort') ?? 'updatedAt:desc';
+  const sort = params.get('sort') ?? 'githubPushedAt:desc';
   const page = Number(params.get('page') ?? 1) || 1;
 
   const [query, setQuery] = useState(q);
   const [data, setData] = useState<Paginated<ProjectSummaryDto> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+  const [syncing, setSyncing] = useState(false);
+  const [syncedAt, setSyncedAt] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(SYNC_KEY);
+    } catch {
+      return null;
+    }
+  });
   const toast = useToast();
 
   /** 공개 화면 노출 스위치: 켜면 공개+게시, 끄면 비공개+게시 해제 (화면을 먼저 바꾸고 실패하면 되돌림) */
@@ -77,6 +91,42 @@ export function ProjectsPage() {
   }, [q, status, visibility, sort, page]);
   useEffect(load, [load]);
 
+  /** GitHub 동기화: 새 저장소는 프로젝트로 만들고, 이름·설명·주소·최근 변경일을 맞춘다 */
+  const sync = useCallback(
+    async (manual: boolean) => {
+      setSyncing(true);
+      try {
+        const r = await api<GithubSyncResult>('/admin/github/sync', { method: 'POST' });
+        setSyncedAt(r.syncedAt);
+        try {
+          sessionStorage.setItem(SYNC_KEY, r.syncedAt);
+        } catch {
+          /* 저장 못 해도 동작에는 지장 없음 */
+        }
+        if (manual || r.created || r.updated || r.errors.length) {
+          toast(
+            `GitHub 동기화: 저장소 ${r.total}개${r.created ? ` · 새 프로젝트 ${r.created}개` : ''}${r.updated ? ` · 변경 ${r.updated}개` : ''}${
+              r.errors.length ? ` · 실패 ${r.errors.length}개` : ''
+            }`,
+          );
+        }
+        if (r.created || r.updated) load();
+      } catch (e) {
+        if (manual) toast(e instanceof ApiRequestError ? e.message : 'GitHub 동기화에 실패했습니다.');
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [load, toast],
+  );
+
+  // 목록을 열 때 자동 동기화 (최근 10분 안에 했으면 건너뜀)
+  useEffect(() => {
+    const last = syncedAt ? Date.parse(syncedAt) : 0;
+    if (Date.now() - last > SYNC_INTERVAL_MS) void sync(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 검색어 입력은 잠시 멈췄을 때 반영
   useEffect(() => {
     if (query === q) return;
@@ -93,11 +143,14 @@ export function ProjectsPage() {
         <div>
           <div className="eyebrow">ADM-02 · MANAGEMENT</div>
           <h1>프로젝트 관리</h1>
-          <p className="muted">프로젝트 정보와 공개 상태를 관리합니다.</p>
+          <p className="muted">GitHub 저장소가 곧 프로젝트입니다. 이름·설명·주소는 GitHub에서 자동으로 맞춰집니다.</p>
         </div>
-        <Link to="/projects/new" className="btn btn-primary">
-          ＋ 프로젝트 등록
-        </Link>
+        <div className="sync-box">
+          <button type="button" className="btn btn-secondary" onClick={() => sync(true)} disabled={syncing}>
+            {syncing ? '동기화 중…' : '↻ GitHub 동기화'}
+          </button>
+          <span className="caption">{syncing ? 'GitHub 저장소를 확인하고 있습니다' : syncedAt ? `마지막 동기화 ${shortDate(syncedAt)}` : '아직 동기화 안 함'}</span>
+        </div>
       </div>
 
       <section className="panel">
@@ -162,11 +215,11 @@ export function ProjectsPage() {
             </div>
           ) : (
             <div className="state">
-              <h3>등록된 프로젝트가 없습니다</h3>
-              <p>첫 프로젝트를 등록해 보세요.</p>
-              <Link to="/projects/new" className="btn btn-primary">
-                ＋ 프로젝트 등록
-              </Link>
+              <h3>프로젝트가 없습니다</h3>
+              <p>GitHub 저장소를 불러와 프로젝트로 만듭니다.</p>
+              <button type="button" className="btn btn-primary" onClick={() => sync(true)} disabled={syncing}>
+                {syncing ? '동기화 중…' : '↻ GitHub 동기화'}
+              </button>
             </div>
           )
         ) : (
@@ -191,7 +244,7 @@ export function ProjectsPage() {
                   <th scope="col">공개 화면</th>
                   <th scope="col">기간</th>
                   <th scope="col" className="num">저장소</th>
-                  <th scope="col">수정일</th>
+                  <th scope="col">깃 변경</th>
                   <th scope="col">
                     <span className="sr-only">관리</span>
                   </th>
@@ -239,8 +292,8 @@ export function ProjectsPage() {
                     <td data-label="저장소" className="num">
                       {p.repositoryCount ? `${p.repositoryCount}개` : <span className="muted">—</span>}
                     </td>
-                    <td data-label="수정일" className="cell-date">
-                      {shortDate(p.updatedAt)}
+                    <td data-label="깃 변경" className="cell-date" title={p.githubRepo ?? 'GitHub 연결 없음'}>
+                      {p.githubPushedAt ? shortDate(p.githubPushedAt) : <span className="muted">—</span>}
                     </td>
                     <td className="cell-actions">
                       <Link to={`/projects/${p.id}/edit`} className="btn btn-tertiary btn-sm" aria-label={`${p.title} 수정`}>

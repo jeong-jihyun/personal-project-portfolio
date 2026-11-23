@@ -38,7 +38,8 @@ export function App() {
             <Route element={<RequireAuth />}>
               <Route index element={<DashboardPage />} />
               <Route path="projects" element={<ProjectsPage />} />
-              <Route path="projects/new" element={<ProjectFormPage />} />
+              {/* 프로젝트는 GitHub 동기화로만 생긴다 */}
+              <Route path="projects/new" element={<Navigate to="/projects" replace />} />
               <Route path="projects/:id" element={<ProjectDetailPage key="detail" />} />
               <Route path="projects/:id/edit" element={<ProjectFormPage key="edit" />} />
               <Route path="repositories" element={<RepositoriesPage />} />

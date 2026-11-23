@@ -1,11 +1,10 @@
 /** ADM-05 Git 저장소 관리: 내 전체 저장소, 프로젝트·공개 범위 필터, 등록·수정·대표 지정·삭제. */
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import type { Paginated, ProjectSummaryDto, RepositoryWithProjectDto } from '@ppp/shared';
+import { useSearchParams } from 'react-router-dom';
+import type { GithubSyncResult, Paginated, ProjectSummaryDto, RepositoryWithProjectDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
-import { GithubImportDialog } from '../components/GithubImportDialog';
-import { RepositoryDialog } from '../components/RepositoryDialog';
 import { RepositoryList } from '../components/RepositoryList';
+import { useToast } from '../components/Toast';
 import { ErrorState } from '../components/ui';
 
 export function RepositoriesPage() {
@@ -15,8 +14,8 @@ export function RepositoriesPage() {
   const [items, setItems] = useState<RepositoryWithProjectDto[] | null>(null);
   const [projects, setProjects] = useState<ProjectSummaryDto[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
-  const [importing, setImporting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const toast = useToast();
 
   const load = useCallback(() => {
     const q = new URLSearchParams();
@@ -44,6 +43,20 @@ export function RepositoriesPage() {
     setParams(next, { replace: true });
   };
 
+  const runSync = async () => {
+    setSyncing(true);
+    try {
+      const r = await api<GithubSyncResult>('/admin/github/sync', { method: 'POST' });
+      toast(`GitHub 동기화: 저장소 ${r.total}개${r.created ? ` · 새 프로젝트 ${r.created}개` : ''}${r.updated ? ` · 변경 ${r.updated}개` : ''}${r.errors.length ? ` · 실패 ${r.errors.length}개` : ''}`);
+      load();
+      loadProjects();
+    } catch (e) {
+      toast(e instanceof ApiRequestError ? e.message : 'GitHub 동기화에 실패했습니다.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const primaryCount = items?.filter((r) => r.isPrimary).length ?? 0;
   const publicCount = items?.filter((r) => r.visibility === 'PUBLIC').length ?? 0;
 
@@ -53,14 +66,11 @@ export function RepositoriesPage() {
         <div>
           <div className="eyebrow">ADM-05 · GIT INTEGRATION</div>
           <h1>Git 저장소 관리</h1>
-          <p className="muted">프로젝트별 여러 저장소와 공개 정책을 관리합니다. GitHub 저장소(공개·비공개)를 한 번에 가져올 수 있습니다.</p>
+          <p className="muted">GitHub 저장소 1개 = 프로젝트 1개입니다. 동기화하면 새 저장소는 프로젝트로 만들어지고, 정보는 GitHub 값으로 맞춰집니다.</p>
         </div>
         <div className="head-actions">
-          <button className="btn btn-secondary" onClick={() => setImporting(true)}>
-            ⤓ GitHub에서 가져오기
-          </button>
-          <button className="btn btn-primary" onClick={() => setAdding(true)} disabled={projects.length === 0}>
-            ＋ 저장소 등록
+          <button className="btn btn-primary" onClick={runSync} disabled={syncing}>
+            {syncing ? '동기화 중…' : '↻ GitHub 동기화'}
           </button>
         </div>
       </div>
@@ -105,43 +115,15 @@ export function RepositoriesPage() {
         ) : items.length === 0 ? (
           <div className="state">
             <h3>{projectId || visibility ? '조건에 맞는 저장소가 없습니다' : '등록된 저장소가 없습니다'}</h3>
-            {projects.length === 0 ? (
-              <p>
-                먼저 <Link to="/projects/new">프로젝트를 등록</Link>하세요.
-              </p>
-            ) : (
-              <button className="btn btn-primary" onClick={() => setAdding(true)}>
-                ＋ 저장소 등록
-              </button>
-            )}
+            <p>
+              위의 <b>GitHub 동기화</b>를 눌러 저장소를 불러오세요.
+            </p>
           </div>
         ) : (
           <RepositoryList items={items} showProject onChanged={load} />
         )}
       </section>
 
-      {importing && (
-        <GithubImportDialog
-          projects={projects}
-          onClose={() => setImporting(false)}
-          onDone={() => {
-            setImporting(false);
-            load();
-            loadProjects();
-          }}
-        />
-      )}
-      {adding && (
-        <RepositoryDialog
-          projectId={projectId || undefined}
-          projects={projects}
-          onClose={() => setAdding(false)}
-          onSaved={() => {
-            setAdding(false);
-            load();
-          }}
-        />
-      )}
     </>
   );
 }
