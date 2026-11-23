@@ -1577,3 +1577,31 @@ kbd {
   font-size: 13px;
   margin: 0 0 var(--space-4);
 }
+
+/* 모바일 붙여넣기 칸: 길게 눌러 '붙여넣기' */
+.paste-box {
+  margin: 10px auto 0;
+  max-width: 360px;
+  min-height: 64px;
+  border: 2px dashed var(--color-accent);
+  border-radius: var(--radius-control);
+  background: var(--color-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  caret-color: transparent;
+  color: transparent;
+  overflow: hidden;
+  outline: none;
+}
+.paste-box:empty::before {
+  content: '여기를 길게 눌러 "붙여넣기"';
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+.paste-box img {
+  display: none;
+}

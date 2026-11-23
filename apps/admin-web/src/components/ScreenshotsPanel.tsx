@@ -1,9 +1,10 @@
 /**
  * 프로젝트 스크린샷 관리 (데스크톱·모바일).
  * - 데스크톱: 파일 선택, 끌어다 놓기, Ctrl+V 붙여넣기(캡처 화면) / 모바일: 사진 보관함 선택 또는 카메라 촬영
+ * - 모바일 붙여넣기: '📋 붙여넣기' 버튼(클립보드 읽기). 브라우저가 막으면 '붙여넣기 칸'을 길게 눌러 붙여넣는다.
  * - 첫 번째 이미지가 대표 이미지(프로젝트 목록 썸네일)
  */
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type DragEvent } from 'react';
 import { SCREENSHOT_MAX_PER_PROJECT, type AssetDto } from '@ppp/shared';
 import { ApiRequestError } from '../api';
 import { ImagePrepareError, prepareImage } from '../image';
@@ -47,6 +48,8 @@ export function ScreenshotsPanel({ projectId, assets, onChanged }: { projectId: 
   const [busy, setBusy] = useState(false);
   const pickRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const pasteBoxRef = useRef<HTMLDivElement>(null);
+  const [pasteBox, setPasteBox] = useState(false);
   const remaining = SCREENSHOT_MAX_PER_PROJECT - images.length;
 
   const handleFiles = async (list: FileList | File[] | null) => {
@@ -92,6 +95,57 @@ export function ScreenshotsPanel({ projectId, assets, onChanged }: { projectId: 
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
   }, []);
+
+  const pastedName = (i: number) => `붙여넣은 캡처 ${new Date().toLocaleString('ko-KR')}${i ? ` (${i + 1})` : ''}`;
+
+  const openPasteBox = () => {
+    setPasteBox(true);
+    setTimeout(() => pasteBoxRef.current?.focus(), 50);
+  };
+
+  /** '📋 붙여넣기' 버튼: 클립보드의 이미지를 읽어 올린다 (iOS는 '붙여넣기' 말풍선, 안드로이드는 권한 허용이 한 번 뜸) */
+  const pasteFromClipboard = async () => {
+    if (!navigator.clipboard?.read) {
+      openPasteBox();
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      const files: File[] = [];
+      for (const item of items) {
+        const type = item.types.find((t) => t.startsWith('image/'));
+        if (!type) continue;
+        const blob = await item.getType(type);
+        files.push(new File([blob], `${pastedName(files.length)}.${type.split('/')[1] || 'png'}`, { type }));
+      }
+      if (files.length) {
+        setPasteBox(false);
+        void handleFiles(files);
+      } else {
+        toast('클립보드에 이미지가 없습니다. 스크린샷 미리보기에서 "복사"를 누른 뒤 다시 시도하세요.', 'error');
+      }
+    } catch {
+      // 권한 거부·지원 안 함 → 길게 눌러 붙여넣는 칸으로 안내
+      toast('아래 칸을 길게 눌러 "붙여넣기"를 선택하세요.');
+      openPasteBox();
+    }
+  };
+
+  /** 붙여넣기 칸(길게 눌러 붙여넣기): 이미지만 받아 올리고 칸에는 아무것도 남기지 않는다 */
+  const onPasteBox = (e: ReactClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const files = Array.from(e.clipboardData.items)
+      .filter((i) => i.kind === 'file' && i.type.startsWith('image/'))
+      .map((i) => i.getAsFile())
+      .filter((f): f is File => !!f)
+      .map((f, i) => new File([f], `${pastedName(i)}.${f.type.split('/')[1] || 'png'}`, { type: f.type }));
+    if (files.length === 0) {
+      toast('붙여넣은 내용에 이미지가 없습니다. 스크린샷을 "복사"한 뒤 다시 붙여넣으세요.', 'error');
+      return;
+    }
+    setPasteBox(false);
+    void handleFiles(files);
+  };
 
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -160,14 +214,34 @@ export function ScreenshotsPanel({ projectId, assets, onChanged }: { projectId: 
               <button type="button" className="btn btn-primary" onClick={() => pickRef.current?.click()} disabled={remaining <= 0}>
                 ＋ 이미지 선택
               </button>
+              <button type="button" className="btn btn-secondary" onClick={pasteFromClipboard} disabled={remaining <= 0}>
+                📋 붙여넣기
+              </button>
               <button type="button" className="btn btn-secondary only-touch" onClick={() => cameraRef.current?.click()} disabled={remaining <= 0}>
                 📷 촬영
               </button>
             </div>
+            {pasteBox && (
+              <div
+                ref={pasteBoxRef}
+                className="paste-box"
+                contentEditable
+                suppressContentEditableWarning
+                role="textbox"
+                aria-label="이미지 붙여넣기 칸"
+                inputMode="none"
+                onPaste={onPasteBox}
+                onInput={(e) => {
+                  e.currentTarget.textContent = '';
+                }}
+                onBlur={() => setTimeout(() => setPasteBox(false), 300)}
+              />
+            )}
             <p className="caption">
               <span className="only-pointer">
                 캡처 후 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여넣기 또는 여기로 끌어다 놓기 ·{' '}
               </span>
+              <span className="only-touch">스크린샷 미리보기에서 "복사" → 📋 붙여넣기 ·{' '}</span>
               PNG·JPG·WebP·GIF, 여러 장 가능 · 자동으로 크기를 줄여 올립니다
             </p>
           </>
