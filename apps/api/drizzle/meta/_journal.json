@@ -22,6 +22,13 @@
       "when": 1795436393947,
       "tag": "0002_asset_upload",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795439110922,
+      "tag": "0003_career_markdown",
+      "breakpoints": true
     }
   ]
 }

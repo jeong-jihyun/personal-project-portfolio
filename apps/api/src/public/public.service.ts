@@ -119,6 +119,14 @@ export class PublicService {
     };
   }
 
+  /** 경력 마크다운이 있으면 그것을, 없으면 개별 경력 목록을 공개 화면에 쓴다. */
+  async careerMarkdown(): Promise<string | null> {
+    const ownerId = await this.ownerId();
+    if (!ownerId) return null;
+    const [p] = await this.db.select({ md: profiles.careerMarkdown }).from(profiles).where(eq(profiles.userId, ownerId));
+    return p?.md?.trim() ? p.md : null;
+  }
+
   async careers(): Promise<PublicCareerDto[]> {
     const ownerId = await this.ownerId();
     if (!ownerId) return [];

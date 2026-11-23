@@ -51,6 +51,23 @@ describe('step 8: profile, careers, keywords, asset links', () => {
     expect((await agent.get('/api/v1/admin/careers')).body.items.map((c: { id: string }) => c.id)).not.toContain(created.body.id);
   });
 
+  it('saves career markdown and shows it on the public careers endpoint', async () => {
+    const md = '### 프로젝트 A\n\n**2025**\n\n- **근무기간**: 25.01~25.06\n  - 업무 1\n';
+    const res = await agent.put('/api/v1/admin/profile/career').send({ markdown: md });
+    expect(res.status).toBe(200);
+    expect((await agent.get('/api/v1/admin/profile')).body.careerMarkdown).toBe(md);
+    expect((await ctx.http.get('/api/v1/public/careers')).body.markdown).toBe(md);
+
+    // 프로필 저장이 경력 마크다운을 지우지 않는다
+    await agent.put('/api/v1/admin/profile').send({ displayName: '홍길동', publicationStatus: 'PUBLISHED' });
+    expect((await agent.get('/api/v1/admin/profile')).body.careerMarkdown).toBe(md);
+
+    expect((await agent.put('/api/v1/admin/profile/career').send({ markdown: 'x'.repeat(50001) })).status).toBe(400);
+    await agent.put('/api/v1/admin/profile/career').send({ markdown: '  ' });
+    expect((await ctx.http.get('/api/v1/public/careers')).body.markdown).toBeNull();
+    expect((await ctx.http.put('/api/v1/admin/profile/career').send({ markdown: 'x' })).status).toBe(401);
+  });
+
   it('renames, merges and deletes keywords', async () => {
     const list = async () => (await agent.get('/api/v1/admin/skills')).body.items as { id: string; name: string; projectCount: number }[];
     const ts = (await list()).find((s) => s.name === 'TypeScript')!;

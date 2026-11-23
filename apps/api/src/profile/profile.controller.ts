@@ -2,7 +2,7 @@
 import { Body, Controller, Get, Inject, Put, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { eq } from 'drizzle-orm';
-import { profileSchema, type ProfileDto, type UserDto } from '@ppp/shared';
+import { careerMarkdownSchema, profileSchema, type ProfileDto, type UserDto } from '@ppp/shared';
 import type { z } from 'zod';
 import { ActivityService } from '../activity/activity.service.js';
 import { AuthGuard } from '../auth/auth.guard.js';
@@ -23,6 +23,7 @@ const toDto = (p: Row): ProfileDto => ({
   location: p.location,
   links: p.links ?? [],
   publicationStatus: p.publicationStatus,
+  careerMarkdown: p.careerMarkdown,
   updatedAt: toIso(p.updatedAt),
 });
 
@@ -41,7 +42,25 @@ export class ProfileController {
     const [p] = await this.db.select().from(profiles).where(eq(profiles.userId, user.id));
     return p
       ? toDto(p)
-      : { displayName: user.displayName, headline: null, bio: null, contactEmail: null, location: null, links: [], publicationStatus: 'DRAFT', updatedAt: null };
+      : { displayName: user.displayName, headline: null, bio: null, contactEmail: null, location: null, links: [], publicationStatus: 'DRAFT', careerMarkdown: null, updatedAt: null };
+  }
+
+  /** 경력 마크다운 저장 (빈 문자열이면 지움 → 공개 화면은 개별 경력 목록으로 돌아감) */
+  @Put('career')
+  @ApiZodBody(careerMarkdownSchema)
+  async putCareer(
+    @CurrentUser() user: UserDto,
+    @Body(new ZodPipe(careerMarkdownSchema)) body: z.output<typeof careerMarkdownSchema>,
+  ): Promise<{ careerMarkdown: string | null }> {
+    const markdown = body.markdown.trim() ? body.markdown : null;
+    await this.db.transaction(async (tx) => {
+      await tx
+        .insert(profiles)
+        .values({ userId: user.id, displayName: user.displayName, careerMarkdown: markdown })
+        .onConflictDoUpdate({ target: profiles.userId, set: { careerMarkdown: markdown, updatedAt: new Date() } });
+      await this.activity.log({ actorId: user.id, entityType: 'CAREER', action: 'UPDATE', summary: '경력(마크다운) 저장' }, tx);
+    });
+    return { careerMarkdown: markdown };
   }
 
   @Put()

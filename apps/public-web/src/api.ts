@@ -21,7 +21,7 @@ export const publicApi = {
   projects: (keyword?: string) =>
     get<{ items: PublicProjectSummaryDto[] }>(`/projects${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''}`).then((r) => r.items),
   project: (slug: string) => get<PublicProjectDetailDto>(`/projects/${encodeURIComponent(slug)}`),
-  careers: () => get<{ items: PublicCareerDto[] }>('/careers').then((r) => r.items),
+  careers: () => get<{ items: PublicCareerDto[]; markdown: string | null }>('/careers'),
   skills: () => get<{ items: PublicSkillGroupDto[] }>('/skills').then((r) => r.items),
 };
 

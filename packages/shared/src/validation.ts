@@ -348,6 +348,12 @@ export const screenshotOrderSchema = z.object({
   assetIds: z.array(z.uuid()).min(1).max(SCREENSHOT_MAX_PER_PROJECT),
 });
 
+// ── 경력 마크다운 ────────────────────────────────
+export const CAREER_MARKDOWN_MAX = 50000;
+export const careerMarkdownSchema = z.object({
+  markdown: z.string().max(CAREER_MARKDOWN_MAX, `${CAREER_MARKDOWN_MAX.toLocaleString()}자 이하로 입력하세요.`),
+});
+
 // ── 프로필 (F-006) ───────────────────────────────────
 export const profileLinkSchema = z.object({
   label: requiredText(40, '링크 이름'),

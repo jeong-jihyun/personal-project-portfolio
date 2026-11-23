@@ -133,6 +133,8 @@ export interface ProfileDto {
   location: string | null;
   links: ProfileLink[];
   publicationStatus: PublicationStatus;
+  /** 경력 마크다운 */
+  careerMarkdown: string | null;
   updatedAt: string | null;
 }
 

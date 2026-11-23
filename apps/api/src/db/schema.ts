@@ -78,6 +78,8 @@ export const profiles = pgTable('profiles', {
   location: text('location'),
   links: jsonb('links').$type<ProfileLink[]>().notNull().default([]),
   publicationStatus: publicationStatusEnum('publication_status').notNull().default('DRAFT'),
+  /** 경력 전체를 마크다운 한 덩어리로 (공개 화면 경력 영역에 그대로 표시) */
+  careerMarkdown: text('career_markdown'),
   updatedAt: updatedAt(),
 });
 

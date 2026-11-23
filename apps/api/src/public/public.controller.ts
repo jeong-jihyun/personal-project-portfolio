@@ -32,7 +32,8 @@ export class PublicController {
   @Get('careers')
   @Header('Cache-Control', CACHE)
   async careers() {
-    return { items: await this.pub.careers() };
+    const [items, markdown] = await Promise.all([this.pub.careers(), this.pub.careerMarkdown()]);
+    return { items, markdown };
   }
 
   @Get('skills')

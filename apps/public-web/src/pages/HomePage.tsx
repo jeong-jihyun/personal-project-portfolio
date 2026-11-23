@@ -1,5 +1,7 @@
 /** PUB-01 홈: 소개, 대표 프로젝트, 키워드, 경력 요약, 연락 */
+import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
+import remarkGfm from 'remark-gfm';
 import type { PublicProfileDto } from '@ppp/shared';
 import { period, publicApi, useLoad } from '../api';
 import { ProjectCard } from '../ProjectCard';
@@ -84,12 +86,20 @@ export function HomePage({ profile, profileLoading }: { profile: PublicProfileDt
         </section>
       )}
 
-      {(careers.data?.length ?? 0) > 0 && (
+      {careers.data?.markdown ? (
+        <section className="pub-section" aria-labelledby="career-title">
+          <div className="eyebrow">EXPERIENCE</div>
+          <h2 id="career-title">경력</h2>
+          <div className="markdown career-md">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{careers.data.markdown}</ReactMarkdown>
+          </div>
+        </section>
+      ) : (careers.data?.items.length ?? 0) > 0 && (
         <section className="pub-section" aria-labelledby="career-title">
           <div className="eyebrow">EXPERIENCE</div>
           <h2 id="career-title">경력</h2>
           <ol className="timeline">
-            {careers.data!.map((c, i) => (
+            {careers.data!.items.map((c, i) => (
               <li key={i}>
                 <span className="timeline-period">{period(c.startDate, c.endDate)}</span>
                 <div>
