@@ -1,20 +1,16 @@
-/** PUB-01 홈: 소개, 대표 프로젝트, 키워드, 경력 요약, 연락 */
-import ReactMarkdown from 'react-markdown';
+/** PUB-01 홈: 소개 → 프로젝트(태그 + 갤러리 카드) → 경력 미리보기(최근 3개) → 연락 */
 import { Link } from 'react-router-dom';
-import remarkGfm from 'remark-gfm';
 import type { PublicProfileDto } from '@ppp/shared';
-import { period, publicApi, useLoad } from '../api';
-import { ProjectCard } from '../ProjectCard';
+import { publicApi, useLoad } from '../api';
+import { CareerView, careerCount } from '../Career';
+import { ProjectGallery } from '../ProjectGallery';
+
+const CAREER_PREVIEW = 3;
 
 export function HomePage({ profile, profileLoading }: { profile: PublicProfileDto | null; profileLoading: boolean }) {
   const projects = useLoad(() => publicApi.projects(), []);
-  const skills = useLoad(() => publicApi.skills(), []);
   const careers = useLoad(() => publicApi.careers(), []);
-
-  const list = projects.data ?? [];
-  const featured = list.filter((p) => p.isFeatured);
-  const highlight = (featured.length ? featured : list).slice(0, 4);
-  const keywords = (skills.data ?? []).flatMap((g) => g.skills).sort((a, b) => b.projects.length - a.projects.length);
+  const totalCareers = careerCount(careers.data);
 
   return (
     <>
@@ -29,87 +25,29 @@ export function HomePage({ profile, profileLoading }: { profile: PublicProfileDt
           </>
         )}
         <div className="hero-actions">
-          <Link to="/projects" className="btn btn-primary">
-            프로젝트 보기 →
-          </Link>
+          <a href="#work" className="btn btn-primary">
+            프로젝트 보기 ↓
+          </a>
           <a href="#contact" className="btn btn-secondary">
             연락하기
           </a>
         </div>
       </section>
 
-      <section className="pub-section" aria-labelledby="work-title">
-        <div className="section-head">
-          <div>
-            <div className="eyebrow">SELECTED WORK</div>
-            <h2 id="work-title">{featured.length ? '대표 프로젝트' : '프로젝트'}</h2>
-          </div>
-          {list.length > highlight.length && (
-            <Link to="/projects" className="btn btn-tertiary">
-              전체 {list.length}개 보기 →
-            </Link>
-          )}
-        </div>
-        {projects.loading ? (
-          <div className="pcards">
-            {[0, 1].map((i) => (
-              <div key={i} className="skeleton" style={{ height: 320 }} />
-            ))}
-          </div>
-        ) : projects.error ? (
-          <p className="muted">프로젝트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
-        ) : highlight.length === 0 ? (
-          <p className="muted">아직 공개된 프로젝트가 없습니다.</p>
-        ) : (
-          <div className="pcards">
-            {highlight.map((p) => (
-              <ProjectCard key={p.slug} p={p} large />
-            ))}
-          </div>
-        )}
+      <section className="pub-section" id="work" aria-labelledby="work-title">
+        <div className="eyebrow">PROJECTS</div>
+        <h2 id="work-title">프로젝트</h2>
+        <ProjectGallery projects={projects.data ?? []} loading={projects.loading} error={projects.error} />
       </section>
 
-      {keywords.length > 0 && (
-        <section className="pub-section" aria-labelledby="kw-title">
-          <div className="eyebrow">KEYWORDS</div>
-          <h2 id="kw-title">기술 키워드</h2>
-          <p className="kw-cloud">
-            {keywords.map((k) => (
-              <Link key={k.name} to={`/projects?keyword=${encodeURIComponent(k.name)}`} className="kw kw-lg">
-                #{k.name}
-                <span className="kw-count" aria-label={`프로젝트 ${k.projects.length}개`}>
-                  {k.projects.length}
-                </span>
-              </Link>
-            ))}
-          </p>
-        </section>
-      )}
-
-      {careers.data?.markdown ? (
+      {totalCareers > 0 && (
         <section className="pub-section" aria-labelledby="career-title">
           <div className="eyebrow">EXPERIENCE</div>
-          <h2 id="career-title">경력</h2>
-          <div className="markdown career-md">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{careers.data.markdown}</ReactMarkdown>
-          </div>
-        </section>
-      ) : (careers.data?.items.length ?? 0) > 0 && (
-        <section className="pub-section" aria-labelledby="career-title">
-          <div className="eyebrow">EXPERIENCE</div>
-          <h2 id="career-title">경력</h2>
-          <ol className="timeline">
-            {careers.data!.items.map((c, i) => (
-              <li key={i}>
-                <span className="timeline-period">{period(c.startDate, c.endDate)}</span>
-                <div>
-                  <b>{c.company}</b>
-                  <span className="muted"> · {c.position}</span>
-                  {c.description && <p className="prewrap">{c.description}</p>}
-                </div>
-              </li>
-            ))}
-          </ol>
+          <h2 id="career-title">최근 경력</h2>
+          <CareerView data={careers.data!} limit={CAREER_PREVIEW} />
+          <Link to="/career" className="more-link">
+            경력 전체 보기{totalCareers > CAREER_PREVIEW ? ` (${totalCareers}건)` : ''} →
+          </Link>
         </section>
       )}
 

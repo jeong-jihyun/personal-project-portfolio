@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PROJECT_STATUSES, PROJECT_STATUS_LABEL, type Paginated, type ProjectSummaryDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
-import { ErrorState, formatPeriod, Pagination, PublicationBadge, StatusBadge, VisibilityBadge } from '../components/ui';
+import { ErrorState, Pagination, PublicationBadge, StatusBadge, VisibilityBadge } from '../components/ui';
 
 const PAGE_SIZE = 10;
 const SORTS = [
@@ -143,38 +143,60 @@ export function ProjectsPage() {
           )
         ) : (
           <>
-            <table className="table">
+            <p className="list-count caption">
+              총 <b>{data.total}</b>개{filtered ? ' (검색 결과)' : ''}
+            </p>
+            <table className="table ptable">
+              <colgroup>
+                <col />
+                <col style={{ width: 96 }} />
+                <col style={{ width: 132 }} />
+                <col style={{ width: 150 }} />
+                <col style={{ width: 72 }} />
+                <col style={{ width: 96 }} />
+                <col style={{ width: 64 }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th scope="col">프로젝트</th>
                   <th scope="col">상태</th>
-                  <th scope="col">공개</th>
+                  <th scope="col">공개 · 게시</th>
                   <th scope="col">기간</th>
-                  <th scope="col">저장소</th>
+                  <th scope="col" className="num">저장소</th>
                   <th scope="col">수정일</th>
+                  <th scope="col">
+                    <span className="sr-only">관리</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {data.items.map((p) => (
                   <tr key={p.id}>
-                    <td data-label="프로젝트" className="cell-project">
+                    <td data-label="프로젝트" className="cell-project-td">
+                      <div className="cell-project">
                       <Link to={`/projects/${p.id}`} className="row-thumb" aria-hidden="true" tabIndex={-1}>
-                        {p.coverImageUrl ? <img src={p.coverImageUrl} alt="" loading="lazy" /> : <span>▣</span>}
+                        {p.coverImageUrl ? <img src={p.coverImageUrl} alt="" loading="lazy" /> : <span>{p.title.slice(0, 1)}</span>}
                       </Link>
                       <div className="row-main">
-                      <Link to={`/projects/${p.id}`} className="row-title">
-                        {p.title}
-                      </Link>
-                      {p.summary && <span className="caption row-summary">{p.summary}</span>}
-                      {p.skills.length > 0 && (
-                        <span className="row-tags">
-                          {p.skills.slice(0, 4).map((s) => (
-                            <span key={s.id} className="tag">
-                              #{s.name}
-                            </span>
-                          ))}
-                        </span>
-                      )}
+                        <Link to={`/projects/${p.id}`} className="row-title" title={p.title}>
+                          {p.title}
+                        </Link>
+                        {p.summary && (
+                          <span className="row-summary" title={p.summary}>
+                            {p.summary}
+                          </span>
+                        )}
+                        {p.skills.length > 0 && (
+                          <span className="row-tags">
+                            {p.skills.slice(0, 3).map((s) => (
+                              <span key={s.id} className="rtag">
+                                #{s.name}
+                              </span>
+                            ))}
+                            {p.skills.length > 3 && <span className="rtag rtag-more">+{p.skills.length - 3}</span>}
+                          </span>
+                        )}
+                      </div>
                       </div>
                     </td>
                     <td data-label="상태">
@@ -186,12 +208,19 @@ export function ProjectsPage() {
                         <PublicationBadge status={p.publicationStatus} />
                       </div>
                     </td>
-                    <td data-label="기간" className="caption">
-                      {formatPeriod(p.startDate, p.endDate)}
+                    <td data-label="기간" className="cell-period">
+                      {shortPeriod(p.startDate, p.endDate)}
                     </td>
-                    <td data-label="저장소">{p.repositoryCount}개</td>
-                    <td data-label="수정일" className="caption">
-                      {new Date(p.updatedAt).toLocaleDateString('ko-KR')}
+                    <td data-label="저장소" className="num">
+                      {p.repositoryCount ? `${p.repositoryCount}개` : <span className="muted">—</span>}
+                    </td>
+                    <td data-label="수정일" className="cell-date">
+                      {shortDate(p.updatedAt)}
+                    </td>
+                    <td className="cell-actions">
+                      <Link to={`/projects/${p.id}/edit`} className="btn btn-tertiary btn-sm" aria-label={`${p.title} 수정`}>
+                        수정
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -203,4 +232,24 @@ export function ProjectsPage() {
       </section>
     </>
   );
+}
+
+/** 2026-07-01 → 2026.07 (목록용 짧은 표기) */
+function ym(d: string): string {
+  return d.slice(0, 7).replace('-', '.');
+}
+function shortPeriod(start: string | null, end: string | null) {
+  if (!start && !end) return <span className="muted">기간 미정</span>;
+  return (
+    <>
+      {start ? ym(start) : '?'} ~ {end ? ym(end) : <span className="ongoing">진행 중</span>}
+    </>
+  );
+}
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  if (d.toDateString() === today.toDateString()) return `오늘 ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
 }

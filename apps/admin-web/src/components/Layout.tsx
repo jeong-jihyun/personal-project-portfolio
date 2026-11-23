@@ -43,9 +43,9 @@ export function Layout() {
         본문으로 건너뛰기
       </a>
       <header className="topbar">
-        <div className="brand">
-          PORTFOLIO<span>·</span>STUDIO
-        </div>
+        <NavLink to="/" className="brand" aria-label="Portfolio Studio 대시보드">
+          <img src={`${import.meta.env.BASE_URL}logo.webp`} alt="Portfolio Studio" width={220} height={22} />
+        </NavLink>
         <div className="topbar-right">
           <a className="btn btn-secondary btn-sm" href="/portfolio/" target="_blank" rel="noopener">
             공개 화면 ↗

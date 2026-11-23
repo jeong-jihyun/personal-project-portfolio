@@ -384,3 +384,19 @@ export const profileSchema = z.object({
   publicationStatus: z.enum(PUBLICATION_STATUSES).default('DRAFT'),
 });
 export type ProfileInput = z.input<typeof profileSchema>;
+
+// ── GitHub 가져오기 ──────────────────────────────────
+export const githubImportSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        /** owner/repo */
+        fullName: z.string().trim().min(3).max(200),
+        /** 붙일 프로젝트. 비우면 저장소 이름으로 새 프로젝트(비공개·비게시)를 만든다. */
+        projectId: z.uuid().nullish(),
+      }),
+    )
+    .min(1, '가져올 저장소를 선택하세요.')
+    .max(300),
+});
+export type GithubImportInput = z.input<typeof githubImportSchema>;

@@ -2,13 +2,17 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { publicApi, useLoad } from './api';
+import { CareerPage } from './pages/CareerPage';
 import { HomePage } from './pages/HomePage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [pathname]);
+  // 같은 화면 안의 #앵커 이동은 그대로 두고, 화면이 바뀔 때만 맨 위로
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return null;
 }
 
@@ -25,14 +29,15 @@ function Shell() {
         본문으로 건너뛰기
       </a>
       <header className="pub-nav">
-        <Link to="/" className="pub-brand">
-          {name}
+        <Link to="/" className="pub-brand" aria-label={`${name} 포트폴리오 홈`}>
+          <img src={`${import.meta.env.BASE_URL}logo.webp`} alt="Portfolio Studio" width={240} height={24} />
         </Link>
         <nav aria-label="주요 메뉴">
           <NavLink to="/" end>
             홈
           </NavLink>
           <NavLink to="/projects">프로젝트</NavLink>
+          <NavLink to="/career">경력</NavLink>
           <a href="/portfolio/#contact">연락</a>
         </nav>
       </header>
@@ -41,6 +46,7 @@ function Shell() {
           <Route index element={<HomePage profile={profile.data ?? null} profileLoading={profile.loading} />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:slug" element={<ProjectDetailPage />} />
+          <Route path="career" element={<CareerPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

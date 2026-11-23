@@ -234,3 +234,33 @@ export interface PublicProfileDto {
   location: string | null;
   links: ProfileLink[];
 }
+
+/** GitHub 가져오기: 내 계정 저장소 한 개 */
+export interface GithubRepoDto {
+  fullName: string;
+  name: string;
+  description: string | null;
+  url: string;
+  private: boolean;
+  archived: boolean;
+  fork: boolean;
+  language: string | null;
+  defaultBranch: string | null;
+  pushedAt: string | null;
+  /** 이미 등록된 경우 연결된 프로젝트 */
+  registeredProject: { id: string; title: string } | null;
+}
+
+export interface GithubReposResponse {
+  login: string;
+  /** 토큰이 있어 비공개 저장소까지 포함했는지 */
+  includesPrivate: boolean;
+  items: GithubRepoDto[];
+}
+
+export interface GithubImportResult {
+  created: number;
+  skipped: number;
+  newProjects: number;
+  errors: { fullName: string; message: string }[];
+}

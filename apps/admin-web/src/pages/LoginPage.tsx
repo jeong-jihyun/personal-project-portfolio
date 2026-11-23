@@ -44,7 +44,7 @@ export function LoginPage() {
     <div className="login-page">
       <form className="login-card" onSubmit={onSubmit} noValidate>
         <div className="brand">
-          PORTFOLIO<span>·</span>STUDIO
+          <img src={`${import.meta.env.BASE_URL}logo.webp`} alt="Portfolio Studio" width={220} height={22} />
         </div>
         <h1>관리자 로그인</h1>
         <p className="muted">프로젝트와 포트폴리오를 관리하려면 로그인하세요.</p>

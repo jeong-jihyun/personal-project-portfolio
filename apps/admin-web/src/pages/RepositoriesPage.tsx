@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Paginated, ProjectSummaryDto, RepositoryWithProjectDto } from '@ppp/shared';
 import { api, ApiRequestError } from '../api';
+import { GithubImportDialog } from '../components/GithubImportDialog';
 import { RepositoryDialog } from '../components/RepositoryDialog';
 import { RepositoryList } from '../components/RepositoryList';
 import { ErrorState } from '../components/ui';
@@ -15,6 +16,7 @@ export function RepositoriesPage() {
   const [projects, setProjects] = useState<ProjectSummaryDto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const load = useCallback(() => {
     const q = new URLSearchParams();
@@ -28,11 +30,12 @@ export function RepositoriesPage() {
   }, [projectId, visibility]);
   useEffect(load, [load]);
 
-  useEffect(() => {
+  const loadProjects = useCallback(() => {
     api<Paginated<ProjectSummaryDto>>('/admin/projects?pageSize=100&sort=title&order=asc')
       .then((r) => setProjects(r.items))
       .catch(() => setProjects([]));
   }, []);
+  useEffect(loadProjects, [loadProjects]);
 
   const setFilter = (k: string, v: string) => {
     const next = new URLSearchParams(params);
@@ -50,11 +53,16 @@ export function RepositoriesPage() {
         <div>
           <div className="eyebrow">ADM-05 · GIT INTEGRATION</div>
           <h1>Git 저장소 관리</h1>
-          <p className="muted">프로젝트별 여러 저장소와 공개 정책을 관리합니다. (수동 등록 · GitHub 자동 동기화는 후속 단계)</p>
+          <p className="muted">프로젝트별 여러 저장소와 공개 정책을 관리합니다. GitHub 저장소(공개·비공개)를 한 번에 가져올 수 있습니다.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setAdding(true)} disabled={projects.length === 0}>
-          ＋ 저장소 등록
-        </button>
+        <div className="head-actions">
+          <button className="btn btn-secondary" onClick={() => setImporting(true)}>
+            ⤓ GitHub에서 가져오기
+          </button>
+          <button className="btn btn-primary" onClick={() => setAdding(true)} disabled={projects.length === 0}>
+            ＋ 저장소 등록
+          </button>
+        </div>
       </div>
 
       <section className="panel">
@@ -112,6 +120,17 @@ export function RepositoriesPage() {
         )}
       </section>
 
+      {importing && (
+        <GithubImportDialog
+          projects={projects}
+          onClose={() => setImporting(false)}
+          onDone={() => {
+            setImporting(false);
+            load();
+            loadProjects();
+          }}
+        />
+      )}
       {adding && (
         <RepositoryDialog
           projectId={projectId || undefined}
