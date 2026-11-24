@@ -34,6 +34,11 @@ export async function createApp({ config, database, logger = true }: CreateAppOp
   app.use(express.json({ limit: '256kb' }));
   app.use(bodyParserErrorHandler);
   app.use(cookieParser());
+  // 관리자·로그인 응답은 브라우저·CDN에 저장하지 않는다 (저장 직후 새로고침에 옛 값이 보이지 않게)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith(`/${API_PREFIX}/admin`) || req.path.startsWith(`/${API_PREFIX}/auth`)) res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
   app.use(originCheckMiddleware(config.allowedOrigins));
   app.enableCors({ origin: config.allowedOrigins, credentials: true });
   app.setGlobalPrefix(API_PREFIX);
